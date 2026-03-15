@@ -9,17 +9,27 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [role, setRole] = useState('student'); // trainer or student
+  const [loading, setLoading] = useState(false);
 
   const handleAuth = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      if (isRegistering) {
-        const { data, error } = await supabase.auth.signUp({
+      if (isForgotPassword) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (error) throw error;
+        alert('Enlace de recuperación enviado. Revisa tu email.');
+        setIsForgotPassword(false);
+      } else if (isRegistering) {
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { role } // Store role in metadata
+            data: { role }
           }
         });
         if (error) throw error;
@@ -30,8 +40,43 @@ export const Login = () => {
       }
     } catch (err) {
       alert(err.message);
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (isForgotPassword) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: 'var(--space-md)' }}>
+        <Card style={{ width: '100%', maxWidth: '400px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: 'var(--space-xs)' }}>Recuperar Acceso</h2>
+            <p style={{ color: 'var(--color-text-muted)' }}>Te enviaremos un link para cambiar tu clave</p>
+          </div>
+          <form onSubmit={handleAuth}>
+            <Input 
+              label="Email" 
+              type="email" 
+              required 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com" 
+            />
+            <Button type="submit" disabled={loading} style={{ width: '100%', marginTop: 'var(--space-md)' }}>
+              {loading ? 'Enviando...' : 'Enviar enlace'}
+            </Button>
+            <button 
+              type="button"
+              onClick={() => setIsForgotPassword(false)}
+              style={{ width: '100%', marginTop: 'var(--space-md)', background: 'none', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}
+            >
+              Volver al inicio
+            </button>
+          </form>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div style={{ 
@@ -89,16 +134,28 @@ export const Login = () => {
           <Input 
             label="Contraseña" 
             type="password" 
-            required 
+            required={!isForgotPassword}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••" 
           />
 
-          <Button type="submit" style={{ width: '100%', marginTop: 'var(--space-md)' }}>
+          {!isRegistering && (
+            <div style={{ textAlign: 'right', marginTop: '-var(--space-xs)' }}>
+              <button 
+                type="button"
+                onClick={() => setIsForgotPassword(true)}
+                style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+          )}
+
+          <Button type="submit" disabled={loading} style={{ width: '100%', marginTop: 'var(--space-md)' }}>
             {isRegistering ? <UserPlus size={18} /> : <LogIn size={18} />}
             <span style={{ marginLeft: 'var(--space-sm)' }}>
-              {isRegistering ? 'Registrarse' : 'Iniciar Sesión'}
+              {loading ? 'Cargando...' : (isRegistering ? 'Registrarse' : 'Iniciar Sesión')}
             </span>
           </Button>
         </form>
@@ -106,7 +163,10 @@ export const Login = () => {
         <p style={{ marginTop: 'var(--space-lg)', textAlign: 'center', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
           {isRegistering ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}
           <button 
-            onClick={() => setIsRegistering(!isRegistering)}
+            onClick={() => {
+              setIsRegistering(!isRegistering);
+              setIsForgotPassword(false);
+            }}
             style={{ marginLeft: 'var(--space-xs)', color: 'var(--color-accent)', fontWeight: 600, background: 'none' }}
           >
             {isRegistering ? 'Inicia sesión' : 'Regístrate aquí'}
