@@ -4,6 +4,8 @@ import App from "./App";
 import "./index.css";
 
 console.log("🚀 Iniciando PersonalTrainner...");
+console.log("📍 API URL:", import.meta.env.VITE_SUPABASE_URL ? "Detectada" : "NO detectada");
+console.log("📍 ANON KEY:", import.meta.env.VITE_SUPABASE_ANON_KEY ? "Detectada" : "NO detectada");
 
 // Error Boundary minimalista para depuración en producción
 class ErrorBoundary extends React.Component {
