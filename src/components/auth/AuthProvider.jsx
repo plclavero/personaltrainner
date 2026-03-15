@@ -23,15 +23,22 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const handleUser = async (user) => {
+    console.log("👤 Auth Change - User:", user?.email);
     if (user) {
       setUser(user);
-      // Fetch role from profile table (we'll create this)
-      const { data } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      setRole(data?.role ?? 'student'); // Default to student
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        console.log("🎭 Role Fetched:", data?.role, "Error:", error);
+        setRole(data?.role ?? 'student');
+      } catch (e) {
+        console.error("❌ Error fetching role:", e);
+        setRole('student');
+      }
     } else {
       setUser(null);
       setRole(null);
