@@ -39,7 +39,9 @@ export const StudentDashboard = () => {
           .eq('workout_id', workout.id)
           .order('order_index', { ascending: true });
         
-        setRoutine(workoutExs || []);
+        // Filter out items where exercise join might have failed (null defense)
+        const validRoutine = (workoutExs || []).filter(item => item.exercises);
+        setRoutine(validRoutine);
       }
     } catch (err) {
       console.error('Error fetching routine:', err);
@@ -96,9 +98,9 @@ export const StudentDashboard = () => {
                 <Card key={item.id} style={{ padding: '0', overflow: 'hidden', display: 'flex' }}>
                    <div style={{ width: '100px', position: 'relative' }}>
                       <img 
-                        src={`https://img.youtube.com/vi/${item.exercises.yt_video_id}/mqdefault.jpg`} 
+                        src={`https://img.youtube.com/vi/${item.exercises?.yt_video_id}/mqdefault.jpg`} 
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                        alt={item.exercises.title}
+                        alt={item.exercises?.title || 'Ejercicio'}
                       />
                       <div style={{ 
                         position: 'absolute', 
@@ -116,7 +118,7 @@ export const StudentDashboard = () => {
                       </div>
                    </div>
                    <div style={{ flex: 1, padding: 'var(--space-md)' }}>
-                      <h4 style={{ margin: 0, fontSize: '1rem' }}>{item.exercises.title}</h4>
+                      <h4 style={{ margin: 0, fontSize: '1rem' }}>{item.exercises?.title || 'Ejercicio sin nombre'}</h4>
                       <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: '8px' }}>
                         <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{item.series} series</span>
                         <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>{item.reps} reps</span>
@@ -125,7 +127,7 @@ export const StudentDashboard = () => {
                         </span>
                       </div>
                       <a 
-                        href={`https://youtube.com/watch?v=${item.exercises.yt_video_id}`} 
+                        href={`https://youtube.com/watch?v=${item.exercises?.yt_video_id}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-accent)', marginTop: '8px', fontWeight: 600 }}
