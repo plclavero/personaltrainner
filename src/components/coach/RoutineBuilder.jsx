@@ -17,6 +17,7 @@ export const RoutineBuilder = ({ student, onBack }) => {
 
   useEffect(() => {
     fetchLibrary();
+    fetchExistingRoutine();
   }, []);
 
   const fetchLibrary = async () => {
@@ -24,10 +25,52 @@ export const RoutineBuilder = ({ student, onBack }) => {
     if (data) setExercises(data);
   };
 
+  const fetchExistingRoutine = async () => {
+    setLoading(true);
+    try {
+      // 1. Get the latest workout for this student
+      const { data: workout } = await supabase
+        .from('workouts')
+        .select('*')
+        .eq('student_id', student.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (workout) {
+        setWorkoutName(workout.name);
+        // 2. Get exercises
+        const { data: exData, error } = await supabase
+          .from('workout_exercises')
+          .select('*, exercises(title, yt_video_id)')
+          .eq('workout_id', workout.id)
+          .order('order_index', { ascending: true });
+
+        if (exData) {
+          const mappedRoutine = exData.map(item => ({
+            ...item.exercises,
+            id: item.id,
+            exercise_id: item.exercise_id,
+            day_of_week: item.day_of_week,
+            series: item.series,
+            reps: item.reps,
+            rest_secs: item.rest_secs,
+            workout_id: item.workout_id
+          }));
+          setRoutine(mappedRoutine);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading routine:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addToRoutine = (exercise) => {
     setRoutine([...routine, { 
       ...exercise, 
-      id: Math.random().toString(36), // Temp ID
+      id: `temp-${Math.random().toString(36).substr(2, 9)}`, 
       exercise_id: exercise.id,
       day_of_week: 1, 
       series: '3', 
@@ -36,18 +79,21 @@ export const RoutineBuilder = ({ student, onBack }) => {
     }]);
   };
 
-  const removeFromRoutine = (tempId) => {
-    setRoutine(routine.filter(item => item.id !== tempId));
+  const removeFromRoutine = (id) => {
+    setRoutine(routine.filter(item => item.id !== id));
   };
 
-  const updateExercise = (tempId, field, value) => {
-    setRoutine(routine.map(item => item.id === tempId ? { ...item, [field]: value } : item));
+  const updateExercise = (id, field, value) => {
+    setRoutine(routine.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      // 1. Create Workout Header
+      // 1. Clean up old exercises for this student if we want to "overwrite"
+      // or just create a new workout group. 
+      // User says "two days", let's assume one Workout object can have many days.
+      
       const { data: workout, error: wError } = await supabase
         .from('workouts')
         .insert([{ 
@@ -74,7 +120,7 @@ export const RoutineBuilder = ({ student, onBack }) => {
       const { error: exError } = await supabase.from('workout_exercises').insert(exercisesToInsert);
       if (exError) throw exError;
 
-      alert('Rutina asignada con éxito! 🏋️‍♂️');
+      alert('Rutina actualizada y asignada! 🏋️‍♂️');
       onBack();
     } catch (err) {
       alert(err.message);

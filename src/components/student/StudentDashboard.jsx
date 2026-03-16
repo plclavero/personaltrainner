@@ -9,6 +9,7 @@ import { ProfileSettings } from '../common/ProfileSettings';
 export const StudentDashboard = () => {
   const { user } = useAuth();
   const [routine, setRoutine] = useState([]);
+  const [workoutName, setWorkoutName] = useState('');
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -46,7 +47,11 @@ export const StudentDashboard = () => {
         
         // Filter out items where exercise join might have failed (null defense)
         const validRoutine = (workoutExs || []).filter(item => item.exercises);
+        console.log('✅ Rutina procesada:', validRoutine);
         setRoutine(validRoutine);
+        setWorkoutName(workout.name);
+      } else {
+        console.log('⚠️ No se encontró ninguna rutina para este alumno.');
       }
     } catch (err) {
       console.error('Error fetching routine:', err);
@@ -95,7 +100,10 @@ export const StudentDashboard = () => {
 
         {/* Current Routine */}
         <section style={{ marginBottom: 'var(--space-xl)' }}>
-          <h3 style={{ marginBottom: 'var(--space-md)', fontSize: '1.125rem' }}>Tu Rutina Asignada</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+            <h3 style={{ margin: 0, fontSize: '1.125rem' }}>Tu Rutina Asignada</h3>
+            {workoutName && <span style={{ fontSize: '0.75rem', background: 'var(--color-bg-main)', padding: '2px 8px', borderRadius: '10px', fontWeight: 600 }}>{workoutName}</span>}
+          </div>
           
           {loading ? (
              <p>Cargando ejercicios...</p>
