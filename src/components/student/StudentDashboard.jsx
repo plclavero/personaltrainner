@@ -11,6 +11,7 @@ export const StudentDashboard = () => {
   const [routine, setRoutine] = useState([]);
   const [workoutName, setWorkoutName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [debugInfo, setDebugInfo] = useState({ userId: null, routineCount: 0, lastError: null });
 

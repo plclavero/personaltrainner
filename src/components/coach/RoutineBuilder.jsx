@@ -16,8 +16,11 @@ export const RoutineBuilder = ({ student, onBack }) => {
 
   useEffect(() => {
     fetchLibrary();
-    fetchExistingRoutine();
   }, []);
+
+  useEffect(() => {
+    fetchExistingRoutine();
+  }, [scheduledDate]);
 
   const fetchLibrary = async () => {
     const { data } = await supabase.from('exercises').select('*');
@@ -28,12 +31,12 @@ export const RoutineBuilder = ({ student, onBack }) => {
     console.log('🧪 Debug RoutineBuilder: Buscando para alumno ID:', student.id);
     setLoading(true);
     try {
+      console.log('🧪 Debug RoutineBuilder: Buscando para alumno ID:', student.id, 'Fecha:', scheduledDate);
       const { data: workout, error: wError } = await supabase
         .from('workouts')
         .select('*')
         .eq('student_id', student.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .eq('scheduled_date', scheduledDate)
         .maybeSingle();
 
       if (wError) console.error('❌ Error fetching workout header:', wError);
@@ -53,7 +56,6 @@ export const RoutineBuilder = ({ student, onBack }) => {
             ...item.exercises,
             id: item.id,
             exercise_id: item.exercise_id,
-            day_of_week: item.day_of_week,
             series: item.series,
             reps: item.reps,
             rest_secs: item.rest_secs,
@@ -61,6 +63,10 @@ export const RoutineBuilder = ({ student, onBack }) => {
           }));
           setRoutine(mappedRoutine);
         }
+      } else {
+        // Reset if no workout found for this specific date
+        setRoutine([]);
+        setWorkoutName('Nueva Rutina');
       }
     } catch (err) {
       console.error('Error loading routine:', err);
@@ -92,28 +98,40 @@ export const RoutineBuilder = ({ student, onBack }) => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // 1. Clean up old exercises for this student if we want to "overwrite"
-      // or just create a new workout group. 
-      // User says "two days", let's assume one Workout object can have many days.
-      
-      const { data: workout, error: wError } = await supabase
+      // 1. Check if workout exists for this date to update or insert
+      const { data: existingWorkout } = await supabase
         .from('workouts')
-        .insert([{ 
-            trainer_id: user.id, 
-            student_id: student.id, 
-            name: workoutName,
-            scheduled_date: scheduledDate
-        }])
-        .select()
-        .single();
-      
-      if (wError) throw wError;
+        .select('id')
+        .eq('student_id', student.id)
+        .eq('scheduled_date', scheduledDate)
+        .maybeSingle();
+
+      let workoutId;
+
+      if (existingWorkout) {
+        workoutId = existingWorkout.id;
+        await supabase.from('workouts').update({ name: workoutName }).eq('id', workoutId);
+        // Clean up exercises to re-insert (simpler than syncing)
+        await supabase.from('workout_exercises').delete().eq('workout_id', workoutId);
+      } else {
+        const { data: newWorkout, error: wError } = await supabase
+          .from('workouts')
+          .insert([{ 
+              trainer_id: user.id, 
+              student_id: student.id, 
+              name: workoutName,
+              scheduled_date: scheduledDate
+          }])
+          .select()
+          .single();
+        if (wError) throw wError;
+        workoutId = newWorkout.id;
+      }
 
       // 2. Insert Exercises
       const exercisesToInsert = routine.map((item, index) => ({
-        workout_id: workout.id,
+        workout_id: workoutId,
         exercise_id: item.exercise_id,
-        day_of_week: item.day_of_week,
         series: item.series,
         reps: item.reps,
         rest_secs: item.rest_secs,
