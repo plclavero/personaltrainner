@@ -156,13 +156,18 @@ export const StudentDashboard = () => {
                 onClick={() => setSelectedDate(dateStr)}
                 style={{ 
                   flex: '0 0 60px', 
+                  height: '70px',
                   padding: 'var(--space-sm)', 
                   borderRadius: '12px', 
                   background: isSelected ? 'var(--color-accent)' : 'white',
                   color: isSelected ? 'white' : 'var(--color-text-main)',
                   border: isSelected ? 'none' : '1px solid var(--color-border)',
                   textAlign: 'center',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center'
                 }}
               >
                 <div style={{ fontSize: '0.625rem', textTransform: 'uppercase', opacity: 0.8 }}>
