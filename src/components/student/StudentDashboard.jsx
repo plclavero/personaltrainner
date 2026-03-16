@@ -170,6 +170,7 @@ export const StudentDashboard = () => {
           </Card>
         </div>
       </main>
+    )}
     </div>
   );
 };
