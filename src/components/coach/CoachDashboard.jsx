@@ -6,7 +6,7 @@ import { RoutineBuilder } from './RoutineBuilder';
 import { ProfileSettings } from '../common/ProfileSettings';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
-import { Users, Video, LogOut, LayoutDashboard, ChevronRight, Settings } from 'lucide-react';
+import { Users, Video, LogOut, LayoutDashboard, ChevronRight, Settings, TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 export const CoachDashboard = () => {
