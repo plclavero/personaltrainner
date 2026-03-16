@@ -139,12 +139,21 @@ export const RoutineBuilder = ({ student, onBack }) => {
           <ArrowLeft size={24} />
         </button>
         <div style={{ flex: 1 }}>
-          <h2 style={{ margin: 0 }}>Rutina para {student.full_name || student.email}</h2>
-          <Input 
-            value={workoutName} 
-            onChange={e => setWorkoutName(e.target.value)}
-            style={{ border: 'none', background: 'transparent', padding: 0, fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-accent)' }}
-          />
+          <h2 style={{ margin: 0, fontSize: '1.125rem' }}>Rutina para {student.first_name || student.email}</h2>
+          <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', marginTop: '4px' }}>
+            <input 
+              value={workoutName} 
+              onChange={e => setWorkoutName(e.target.value)}
+              style={{ border: 'none', background: 'transparent', padding: 0, fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-accent)', outline: 'none' }}
+              placeholder="Nombre del entrenamiento"
+            />
+            <input 
+              type="date"
+              value={scheduledDate}
+              onChange={e => setScheduledDate(e.target.value)}
+              style={{ border: '1px solid var(--color-border)', borderRadius: '4px', padding: '2px 8px', fontSize: '0.875rem' }}
+            />
+          </div>
         </div>
         <Button onClick={handleSave} disabled={loading || routine.length === 0}>
           <Save size={18} />
