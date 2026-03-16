@@ -10,6 +10,7 @@ export const RoutineBuilder = ({ student, onBack }) => {
   const { user } = useAuth();
   const [exercises, setExercises] = useState([]); // Library
   const [routine, setRoutine] = useState([]); // Exercises in workout
+  const [workoutName, setWorkoutName] = useState('Nueva Rutina');
   const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
   const [recentWorkouts, setRecentWorkouts] = useState([]);
   const [loading, setLoading] = useState(false);
