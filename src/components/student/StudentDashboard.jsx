@@ -103,8 +103,8 @@ export const StudentDashboard = () => {
         {/* Current Routine */}
         <section style={{ marginBottom: 'var(--space-xl)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-            <h3 style={{ margin: 0, fontSize: '1.125rem' }}>Tu Rutina Asignada</h3>
-            {workoutName && <span style={{ fontSize: '0.75rem', background: 'var(--color-bg-main)', padding: '2px 8px', borderRadius: '10px', fontWeight: 600 }}>{workoutName}</span>}
+            <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Tu Entrenamiento</h3>
+            {workoutName && <span style={{ fontSize: '0.75rem', background: 'var(--color-accent)', color: 'white', padding: '4px 12px', borderRadius: '20px', fontWeight: 600 }}>{workoutName}</span>}
           </div>
           
           {loading ? (
@@ -120,52 +120,69 @@ export const StudentDashboard = () => {
               </div>
             </Card>
           ) : (
-            <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
-              {routine.map((item) => (
-                <Card key={item.id} style={{ padding: '0', overflow: 'hidden', display: 'flex' }}>
-                   <div style={{ width: '100px', position: 'relative' }}>
-                      <img 
-                        src={`https://img.youtube.com/vi/${item.exercises?.yt_video_id}/mqdefault.jpg`} 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                        alt={item.exercises?.title || 'Ejercicio'}
-                      />
-                      <div style={{ 
-                        position: 'absolute', 
-                        top: 0, 
-                        left: 0, 
-                        right: 0, 
-                        bottom: 0, 
-                        background: 'rgba(0,0,0,0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white'
-                      }}>
-                        <PlayCircle size={24} />
-                      </div>
-                   </div>
-                   <div style={{ flex: 1, padding: 'var(--space-md)' }}>
-                      <h4 style={{ margin: 0, fontSize: '1rem' }}>{item.exercises?.title || 'Ejercicio sin nombre'}</h4>
-                      <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: '8px' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{item.series} series</span>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>{item.reps} reps</span>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Clock size={12} /> {item.rest_secs}s
-                        </span>
-                      </div>
-                      <a 
-                        href={`https://youtube.com/watch?v=${item.exercises?.yt_video_id}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-accent)', marginTop: '8px', fontWeight: 600 }}
-                      >
-                         <ExternalLink size={12} /> VER TÉCNICA
-                      </a>
-                   </div>
-                </Card>
-              ))}
+            <div style={{ display: 'grid', gap: 'var(--space-xl)' }}>
+              {[1, 2, 3, 4, 5, 6, 7].map(dayNum => {
+                const dayExs = routine.filter(ex => ex.day_of_week === dayNum);
+                if (dayExs.length === 0) return null;
+
+                const dayNames = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                
+                return (
+                  <div key={dayNum}>
+                    <h4 style={{ color: 'var(--color-accent)', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--space-md)', borderBottom: '1px solid var(--color-border)', paddingBottom: '4px' }}>
+                      {dayNames[dayNum]}
+                    </h4>
+                    <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
+                      {dayExs.map((item) => (
+                        <Card key={item.id} style={{ padding: '0', overflow: 'hidden', display: 'flex' }}>
+                           <div style={{ width: '100px', position: 'relative' }}>
+                              <img 
+                                src={`https://img.youtube.com/vi/${item.exercises?.yt_video_id}/mqdefault.jpg`} 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                alt={item.exercises?.title || 'Ejercicio'}
+                              />
+                              <div style={{ 
+                                position: 'absolute', 
+                                top: 0, 
+                                left: 0, 
+                                right: 0, 
+                                bottom: 0, 
+                                background: 'rgba(0,0,0,0.2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white'
+                              }}>
+                                <PlayCircle size={24} />
+                              </div>
+                           </div>
+                           <div style={{ flex: 1, padding: 'var(--space-md)' }}>
+                              <h4 style={{ margin: 0, fontSize: '1rem' }}>{item.exercises?.title || 'Ejercicio sin nombre'}</h4>
+                              <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: '8px' }}>
+                                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{item.series} series</span>
+                                <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>{item.reps} reps</span>
+                                <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <Clock size={12} /> {item.rest_secs}s
+                                </span>
+                              </div>
+                              <a 
+                                href={`https://youtube.com/watch?v=${item.exercises?.yt_video_id}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-accent)', marginTop: '8px', fontWeight: 600 }}
+                              >
+                                 <ExternalLink size={12} /> VER TÉCNICA
+                              </a>
+                           </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              
               <Button style={{ width: '100%', marginTop: 'var(--space-md)' }}>
-                <PlayCircle size={18} /> INICIAR ENTRENAMIENTO
+                <PlayCircle size={18} /> COMENZAR SESIÓN
               </Button>
             </div>
           )}
