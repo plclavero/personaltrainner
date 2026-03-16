@@ -12,6 +12,7 @@ export const StudentDashboard = () => {
   const [workoutName, setWorkoutName] = useState('');
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [debugInfo, setDebugInfo] = useState({ userId: null, routineCount: 0, lastError: null });
 
   useEffect(() => {
     fetchMyRoutine();
@@ -47,14 +48,15 @@ export const StudentDashboard = () => {
         
         // Filter out items where exercise join might have failed (null defense)
         const validRoutine = (workoutExs || []).filter(item => item.exercises);
-        console.log('✅ Rutina procesada:', validRoutine);
         setRoutine(validRoutine);
         setWorkoutName(workout.name);
+        setDebugInfo(prev => ({ ...prev, userId: user.id, routineCount: validRoutine.length }));
       } else {
-        console.log('⚠️ No se encontró ninguna rutina para este alumno.');
+        setDebugInfo(prev => ({ ...prev, userId: user.id, routineCount: 0, lastError: 'No workout found' }));
       }
     } catch (err) {
       console.error('Error fetching routine:', err);
+      setDebugInfo(prev => ({ ...prev, userId: user.id, lastError: err.message }));
     } finally {
       setLoading(false);
     }
@@ -179,6 +181,14 @@ export const StudentDashboard = () => {
             <TrendingUp size={20} style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }} />
             <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Progreso</span>
           </Card>
+        </div>
+
+        {/* Debug Panel */}
+        <div style={{ marginTop: 'var(--space-xl)', padding: 'var(--space-md)', background: '#f8f9fa', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid #ddd' }}>
+          <p style={{ margin: 0, fontWeight: 700 }}>🛠 Diagnóstico:</p>
+          <div>ID Usuario: {user.id}</div>
+          <div>Ejercicios cargados: {debugInfo.routineCount}</div>
+          {debugInfo.lastError && <div style={{ color: 'red' }}>Error: {debugInfo.lastError}</div>}
         </div>
       </main>
     )}

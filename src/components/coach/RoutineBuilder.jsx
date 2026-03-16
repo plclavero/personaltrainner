@@ -26,16 +26,19 @@ export const RoutineBuilder = ({ student, onBack }) => {
   };
 
   const fetchExistingRoutine = async () => {
+    console.log('🧪 Debug RoutineBuilder: Buscando para alumno ID:', student.id);
     setLoading(true);
     try {
-      // 1. Get the latest workout for this student
-      const { data: workout } = await supabase
+      const { data: workout, error: wError } = await supabase
         .from('workouts')
         .select('*')
         .eq('student_id', student.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      if (wError) console.error('❌ Error fetching workout header:', wError);
+      console.log('🧪 Debug RoutineBuilder: Resultado Workout:', workout);
 
       if (workout) {
         setWorkoutName(workout.name);
