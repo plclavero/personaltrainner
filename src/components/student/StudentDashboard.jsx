@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
-import { LogOut, PlayCircle, History, TrendingUp, Clock, ExternalLink } from 'lucide-react';
+import { LogOut, PlayCircle, History, TrendingUp, Clock, ExternalLink, Settings } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { ProfileSettings } from '../common/ProfileSettings';
 
 export const StudentDashboard = () => {
   const { user } = useAuth();
   const [routine, setRoutine] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     fetchMyRoutine();
@@ -65,12 +67,22 @@ export const StudentDashboard = () => {
         zIndex: 10
       }}>
         <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Atleta Panel</h2>
-        <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', color: 'var(--color-text-muted)' }}>
-          <LogOut size={20} />
-        </button>
+        <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
+          <button onClick={() => setShowSettings(true)} style={{ background: 'none', color: 'var(--color-text-muted)' }}>
+            <Settings size={20} />
+          </button>
+          <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', color: 'var(--color-text-muted)' }}>
+            <LogOut size={20} />
+          </button>
+        </div>
       </header>
 
-      <main style={{ padding: 'var(--space-lg)', maxWidth: '600px', margin: '0 auto' }}>
+      {showSettings ? (
+        <main style={{ padding: 'var(--space-lg)' }}>
+          <ProfileSettings onSave={() => setShowSettings(false)} onCancel={() => setShowSettings(false)} />
+        </main>
+      ) : (
+        <main style={{ padding: 'var(--space-lg)', maxWidth: '600px', margin: '0 auto' }}>
         <div style={{ marginBottom: 'var(--space-xl)' }}>
           <h1 style={{ fontSize: '1.5rem', marginBottom: 'var(--space-xs)' }}>
             ¡Hola, {user.first_name || 'Atleta'}! 👋

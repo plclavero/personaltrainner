@@ -3,9 +3,10 @@ import { useAuth } from '../auth/AuthProvider';
 import { ExerciseManager } from './ExerciseManager';
 import { StudentManager } from './StudentManager';
 import { RoutineBuilder } from './RoutineBuilder';
+import { ProfileSettings } from '../common/ProfileSettings';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
-import { Users, Video, LogOut, LayoutDashboard, ChevronRight } from 'lucide-react';
+import { Users, Video, LogOut, LayoutDashboard, ChevronRight, Settings } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 export const CoachDashboard = () => {
@@ -17,6 +18,7 @@ export const CoachDashboard = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'students', label: 'Mis Alumnos', icon: Users },
     { id: 'exercises', label: 'Biblioteca', icon: Video },
+    { id: 'settings', label: 'Mi Perfil', icon: Settings },
   ];
 
   if (selectedStudent) {
@@ -117,6 +119,8 @@ export const CoachDashboard = () => {
         {activeTab === 'students' && <StudentManager onSelectStudent={(s) => setSelectedStudent(s)} />}
 
         {activeTab === 'exercises' && <ExerciseManager />}
+
+        {activeTab === 'settings' && <ProfileSettings onSave={() => setActiveTab('dashboard')} />}
       </main>
     </div>
   );
