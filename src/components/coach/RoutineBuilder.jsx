@@ -29,9 +29,20 @@ export const RoutineBuilder = ({ student, onBack }) => {
       .from('workouts')
       .select('id, name, scheduled_date')
       .eq('student_id', student.id)
-      .order('scheduled_date', { ascending: false })
-      .limit(5);
-    if (data) setRecentWorkouts(data);
+      .order('scheduled_date', { ascending: true }); // Orden cronológico para ver futuro y pasado
+    
+    if (data) {
+      // Filtrar duplicados de fecha (solo mostrar una entrada por día en la cintilla)
+      const uniqueDays = [];
+      const seenDates = new Set();
+      data.forEach(w => {
+        if (!seenDates.has(w.scheduled_date)) {
+          seenDates.add(w.scheduled_date);
+          uniqueDays.push(w);
+        }
+      });
+      setRecentWorkouts(uniqueDays);
+    }
   };
 
   const fetchLibrary = async () => {
@@ -154,6 +165,7 @@ export const RoutineBuilder = ({ student, onBack }) => {
       if (exError) throw exError;
 
       alert('Rutina actualizada y asignada! 🏋️‍♂️');
+      fetchHistory(); // Refresh history
       onBack();
     } catch (err) {
       alert(err.message);

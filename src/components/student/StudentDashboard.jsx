@@ -13,7 +13,8 @@ export const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [occupiedDates, setOccupiedDates] = useState([]); // [ '2026-03-15', ... ]
+  const [occupiedDates, setOccupiedDates] = useState([]); 
+  const [activeVideo, setActiveVideo] = useState(null); // ID del video de YouTube
   const [debugInfo, setDebugInfo] = useState({ userId: null, routineCount: 0, lastError: null });
 
   useEffect(() => {
@@ -73,6 +74,32 @@ export const StudentDashboard = () => {
       setLoading(false);
     }
   };
+
+  const VideoModal = ({ videoId, onClose }) => (
+    <div style={{ 
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+      background: 'rgba(0,0,0,0.85)', zIndex: 1000, 
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-md)' 
+    }}>
+      <div style={{ width: '100%', maxWidth: '800px', background: 'black', borderRadius: '12px', overflow: 'hidden', position: 'relative' }}>
+        <button 
+          onClick={onClose} 
+          style={{ position: 'absolute', top: '10px', right: '10px', background: 'white', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+        >
+          ✕
+        </button>
+        <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+          <iframe 
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1`} 
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+            frameBorder="0"
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg-main)' }}>
@@ -171,8 +198,8 @@ export const StudentDashboard = () => {
                 <PlayCircle size={24} style={{ color: 'var(--color-text-muted)' }} />
               </div>
               <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: '1.125rem', marginBottom: '2px' }}>Sin asignación</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>No tienes ejercicios para esta fecha.</p>
+                <h3 style={{ fontSize: '1.125rem', marginBottom: '2px' }}>Día de descanso</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Hoy no tienes rutina cargada. Deja que tu cuerpo se recupere para volver con todo mañana. 💪🏽🏻</p>
               </div>
             </Card>
           ) : (
@@ -200,7 +227,7 @@ export const StudentDashboard = () => {
                         <PlayCircle size={24} />
                       </div>
                    </div>
-                   <div style={{ flex: 1, padding: 'var(--space-md)' }}>
+                    <div style={{ flex: 1, padding: 'var(--space-md)' }}>
                       <h4 style={{ margin: 0, fontSize: '1rem' }}>{item.exercises?.title || 'Ejercicio sin nombre'}</h4>
                       <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: '8px' }}>
                         <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{item.series} series</span>
@@ -209,14 +236,12 @@ export const StudentDashboard = () => {
                           <Clock size={12} /> {item.rest_secs}s
                         </span>
                       </div>
-                      <a 
-                        href={`https://youtube.com/watch?v=${item.exercises?.yt_video_id}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-accent)', marginTop: '8px', fontWeight: 600 }}
+                      <button 
+                        onClick={() => setActiveVideo(item.exercises?.yt_video_id)}
+                        style={{ background: 'none', border: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-accent)', marginTop: '8px', fontWeight: 600, cursor: 'pointer' }}
                       >
                          <ExternalLink size={12} /> VER TÉCNICA
-                      </a>
+                      </button>
                    </div>
                 </Card>
               ))}
@@ -249,6 +274,7 @@ export const StudentDashboard = () => {
         </div>
       </main>
     )}
+    {activeVideo && <VideoModal videoId={activeVideo} onClose={() => setActiveVideo(null)} />}
     </div>
   );
 };
