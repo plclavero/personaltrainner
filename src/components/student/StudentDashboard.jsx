@@ -18,14 +18,17 @@ export const StudentDashboard = () => {
 
   const fetchMyRoutine = async () => {
     try {
-      // 1. Get the latest workout for this student
-      const { data: workout } = await supabase
+      console.log('🔍 Buscando rutina para ID:', user.id);
+      const { data: workout, error: wError } = await supabase
         .from('workouts')
         .select('id, name')
         .eq('student_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .maybeSingle(); // Use maybeSingle to avoid 406 errors if empty
+        .maybeSingle(); 
+      
+      if (wError) console.error('❌ Error en workouts:', wError);
+      console.log('📄 Workout hallado:', workout);
 
       if (workout) {
         // 2. Get exercises for this workout
