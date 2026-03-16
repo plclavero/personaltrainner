@@ -141,7 +141,7 @@ export const StudentDashboard = () => {
 
         {/* Timeline Selector */}
         <div style={{ display: 'flex', overflowX: 'auto', gap: 'var(--space-md)', paddingBottom: 'var(--space-md)', marginBottom: 'var(--space-lg)', scrollbarWidth: 'none' }}>
-          {[-2, -1, 0, 1, 2, 3, 4].map(offset => {
+          {[-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].map(offset => {
             const date = new Date();
             date.setDate(date.getDate() + offset);
             const dateStr = date.toISOString().split('T')[0];

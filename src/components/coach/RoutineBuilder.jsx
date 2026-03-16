@@ -26,6 +26,13 @@ export const RoutineBuilder = ({ student, onBack }) => {
     fetchExistingRoutine();
   }, [scheduledDate]);
 
+  const fetchHistory = async () => {
+    const { data } = await supabase
+      .from('workouts')
+      .select('id, name, scheduled_date')
+      .eq('student_id', student.id)
+      .order('scheduled_date', { ascending: true });
+
     if (data) {
       // Filtrar duplicados de fecha (solo mostrar una entrada por día en la cintilla)
       const uniqueDays = [];
