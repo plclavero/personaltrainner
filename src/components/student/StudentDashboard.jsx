@@ -105,24 +105,29 @@ export const StudentDashboard = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg-main)' }}>
-      {/* Mobile-friendly Header */}
-      <header style={{ 
-        background: 'white', 
-        padding: 'var(--space-md) var(--space-lg)', 
-        borderBottom: '1px solid var(--color-border)',
+      {/* Premium Header with Glassmorphism */}
+      <header className="glass-effect" style={{ 
+        padding: '1.25rem 1.5rem', 
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         position: 'sticky',
         top: 0,
-        zIndex: 10
+        zIndex: 100,
+        borderRadius: '0 0 24px 24px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.03)'
       }}>
-        <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Atleta Panel</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '40px', height: '40px', background: 'var(--grad-premium)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+            <TrendingUp size={24} />
+          </div>
+          <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>Atleta Panel</h2>
+        </div>
         <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
-          <button onClick={() => setShowSettings(true)} style={{ background: 'none', color: 'var(--color-text-muted)' }}>
+          <button onClick={() => setShowSettings(true)} style={{ background: 'rgba(0,0,0,0.03)', color: 'var(--color-text-main)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Settings size={20} />
           </button>
-          <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', color: 'var(--color-text-muted)' }}>
+          <button onClick={() => supabase.auth.signOut()} style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <LogOut size={20} />
           </button>
         </div>
@@ -133,21 +138,20 @@ export const StudentDashboard = () => {
           <ProfileSettings onSave={() => setShowSettings(false)} onCancel={() => setShowSettings(false)} />
         </main>
       ) : (
-        <main style={{ padding: 'var(--space-lg)', maxWidth: '600px', margin: '0 auto' }}>
-        <div style={{ marginBottom: 'var(--space-xl)' }}>
-          <h1 style={{ fontSize: '1.5rem', marginBottom: 'var(--space-xs)' }}>
-            ¡Hola, {user.first_name || 'Atleta'}! 👋
-          </h1>
-          <p style={{ color: 'var(--color-text-muted)' }}>{user.email}</p>
-        </div>
+        <main style={{ padding: '2rem 1.5rem', maxWidth: '600px', margin: '0 auto' }}>
+          <div style={{ marginBottom: '2.5rem' }}>
+            <h1 style={{ fontSize: '2rem', marginBottom: '0.25rem', background: 'var(--grad-premium)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              ¡Hola, {user.first_name || 'Atleta'}! 👋
+            </h1>
+            <p style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Tu progreso de hoy te espera.</p>
+          </div>
 
-        {/* Timeline Selector */}
-        <div style={{ display: 'flex', overflowX: 'auto', gap: 'var(--space-md)', paddingBottom: 'var(--space-md)', marginBottom: 'var(--space-lg)', scrollbarWidth: 'none' }}>
+        {/* Premium Timeline Selector */}
+        <div className="premium-scroll" style={{ display: 'flex', overflowX: 'auto', gap: '12px', paddingBottom: '1.5rem', marginBottom: '2rem' }}>
           {[-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].map(offset => {
             const date = new Date();
             date.setDate(date.getDate() + offset);
             const dateStr = date.toISOString().split('T')[0];
-            const isToday = offset === 0;
             const isSelected = dateStr === selectedDate;
             
             return (
@@ -155,34 +159,36 @@ export const StudentDashboard = () => {
                 key={offset}
                 onClick={() => setSelectedDate(dateStr)}
                 style={{ 
-                  flex: '0 0 60px', 
-                  height: '70px',
-                  padding: 'var(--space-sm)', 
-                  borderRadius: '12px', 
-                  background: isSelected ? 'var(--color-accent)' : 'white',
+                  flex: '0 0 64px', 
+                  height: '84px',
+                  padding: '12px 0', 
+                  borderRadius: '16px', 
+                  background: isSelected ? 'var(--grad-premium)' : 'white',
                   color: isSelected ? 'white' : 'var(--color-text-main)',
                   border: isSelected ? 'none' : '1px solid var(--color-border)',
+                  boxShadow: isSelected ? '0 10px 15px -3px rgba(79, 70, 229, 0.4)' : 'none',
                   textAlign: 'center',
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'center',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  transition: 'all 0.3s ease'
                 }}
               >
-                <div style={{ fontSize: '0.625rem', textTransform: 'uppercase', opacity: 0.8 }}>
+                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: isSelected ? 0.9 : 0.6, fontWeight: 600, marginBottom: '6px' }}>
                   {date.toLocaleDateString('es-ES', { weekday: 'short' })}
                 </div>
-                <div style={{ fontSize: '1.125rem', fontWeight: 700 }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
                   {date.getDate()}
                 </div>
                 {occupiedDates.includes(dateStr) && (
                   <div style={{ 
-                    width: '4px', 
-                    height: '4px', 
+                    width: '5px', 
+                    height: '5px', 
                     borderRadius: '50%', 
                     background: isSelected ? 'white' : 'var(--color-accent)', 
-                    margin: '2px auto 0' 
+                    marginTop: '6px' 
                   }} />
                 )}
               </button>
@@ -200,52 +206,57 @@ export const StudentDashboard = () => {
           {loading ? (
              <p>Cargando ejercicios...</p>
           ) : routine.length === 0 ? (
-            <Card style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', padding: 'var(--space-lg)', borderLeft: '4px solid var(--color-border)' }}>
-              <div style={{ background: 'rgba(0,0,0,0.05)', padding: 'var(--space-sm)', borderRadius: 'var(--radius-main)' }}>
-                <PlayCircle size={24} style={{ color: 'var(--color-text-muted)' }} />
+            <Card style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              gap: 'var(--space-md)', 
+              padding: '3rem 2rem', 
+              textAlign: 'center',
+              border: '2px dashed var(--color-border)',
+              background: 'transparent'
+            }}>
+              <div style={{ width: '64px', height: '64px', background: 'rgba(79, 70, 229, 0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                <Clock size={32} style={{ color: 'var(--color-accent)' }} />
               </div>
-              <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: '1.125rem', marginBottom: '2px' }}>Día de descanso</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Hoy no tienes rutina cargada. Deja que tu cuerpo se recupere para volver con todo mañana. 💪🏽🏻</p>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '8px' }}>Día de descanso</h3>
+                <p style={{ fontSize: '0.925rem', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>Hoy no tienes rutina cargada. Deja que tu cuerpo se recupere para volver con todo mañana. 💪🏽🏻</p>
               </div>
             </Card>
           ) : (
-            <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
+            <div style={{ display: 'grid', gap: '1.25rem' }}>
               {routine.map((item) => (
-                <Card key={item.id} style={{ padding: '0', overflow: 'hidden', display: 'flex' }}>
-                   <div style={{ width: '100px', position: 'relative' }}>
+                <Card key={item.id} style={{ padding: '0', overflow: 'hidden', display: 'flex', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                   <div style={{ width: '110px', position: 'relative' }}>
                       <img 
                         src={`https://img.youtube.com/vi/${item.exercises?.yt_video_id}/mqdefault.jpg`} 
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                         alt={item.exercises?.title || 'Ejercicio'}
                       />
-                      <div style={{ 
-                        position: 'absolute', 
-                        top: 0, 
-                        left: 0, 
-                        right: 0, 
-                        bottom: 0, 
-                        background: 'rgba(0,0,0,0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white'
-                      }}>
-                        <PlayCircle size={24} />
+                      <div 
+                        onClick={() => setActiveVideo(item.exercises?.yt_video_id)}
+                        style={{ 
+                          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
+                          background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', 
+                          justifyContent: 'center', color: 'white', cursor: 'pointer'
+                        }}
+                      >
+                        <PlayCircle size={32} />
                       </div>
                    </div>
-                    <div style={{ flex: 1, padding: 'var(--space-md)' }}>
-                      <h4 style={{ margin: 0, fontSize: '1rem' }}>{item.exercises?.title || 'Ejercicio sin nombre'}</h4>
-                      <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: '8px' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{item.series} series</span>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>{item.reps} reps</span>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                   <div style={{ flex: 1, padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-primary)' }}>{item.exercises?.title || 'Ejercicio sin nombre'}</h4>
+                      <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                        <div style={{ background: '#f1f5f9', padding: '4px 10px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600 }}>{item.series} SERIES</div>
+                        <div style={{ background: '#f1f5f9', padding: '4px 10px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600 }}>{item.reps} REPS</div>
+                        <div style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <Clock size={12} /> {item.rest_secs}s
-                        </span>
+                        </div>
                       </div>
                       <button 
                         onClick={() => setActiveVideo(item.exercises?.yt_video_id)}
-                        style={{ background: 'none', border: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-accent)', marginTop: '8px', fontWeight: 600, cursor: 'pointer' }}
+                        style={{ background: 'none', border: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-accent)', marginTop: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.05em' }}
                       >
                          <ExternalLink size={12} /> VER TÉCNICA
                       </button>
@@ -253,31 +264,30 @@ export const StudentDashboard = () => {
                 </Card>
               ))}
               
-              <Button style={{ width: '100%', marginTop: 'var(--space-md)' }}>
-                <PlayCircle size={18} /> COMENZAR SESIÓN
-              </Button>
+              <button 
+                className="btn-primary btn-base" 
+                style={{ width: '100%', marginTop: '1rem', height: '56px', fontSize: '1.1rem' }}
+              >
+                <PlayCircle size={22} /> COMENZAR SESIÓN
+              </button>
             </div>
           )}
         </section>
 
         {/* History/Progress Summary */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
-          <Card style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
-            <History size={20} style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }} />
-            <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Historial</span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+          <Card style={{ textAlign: 'center', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+            <div style={{ background: '#f8fafc', width: '44px', height: '44px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
+              <History size={22} />
+            </div>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-primary)' }}>HISTORIAL</span>
           </Card>
-          <Card style={{ textAlign: 'center', padding: 'var(--space-lg)' }}>
-            <TrendingUp size={20} style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }} />
-            <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Progreso</span>
+          <Card style={{ textAlign: 'center', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+            <div style={{ background: '#f8fafc', width: '44px', height: '44px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
+              <TrendingUp size={22} />
+            </div>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-primary)' }}>PROGRESO</span>
           </Card>
-        </div>
-
-        {/* Debug Panel */}
-        <div style={{ marginTop: 'var(--space-xl)', padding: 'var(--space-md)', background: '#f8f9fa', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid #ddd' }}>
-          <p style={{ margin: 0, fontWeight: 700 }}>🛠 Diagnóstico:</p>
-          <div>ID Usuario: {user.id}</div>
-          <div>Ejercicios cargados: {debugInfo.routineCount}</div>
-          {debugInfo.lastError && <div style={{ color: 'red' }}>Error: {debugInfo.lastError}</div>}
         </div>
       </main>
     )}
