@@ -12,25 +12,20 @@ export const RoutineBuilder = ({ student, onBack }) => {
   const [routine, setRoutine] = useState([]); // Exercises in workout
   const [workoutName, setWorkoutName] = useState('Nueva Rutina');
   const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
+  const [occupiedDates, setOccupiedDates] = useState([]); // List of dates with workouts
   const [recentWorkouts, setRecentWorkouts] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchLibrary();
     fetchHistory();
+    fetchOccupiedDates();
   }, []);
 
   useEffect(() => {
     fetchExistingRoutine();
   }, [scheduledDate]);
 
-  const fetchHistory = async () => {
-    const { data } = await supabase
-      .from('workouts')
-      .select('id, name, scheduled_date')
-      .eq('student_id', student.id)
-      .order('scheduled_date', { ascending: true }); // Orden cronológico para ver futuro y pasado
-    
     if (data) {
       // Filtrar duplicados de fecha (solo mostrar una entrada por día en la cintilla)
       const uniqueDays = [];
@@ -42,7 +37,16 @@ export const RoutineBuilder = ({ student, onBack }) => {
         }
       });
       setRecentWorkouts(uniqueDays);
+      setOccupiedDates(Array.from(seenDates));
     }
+  };
+
+  const fetchOccupiedDates = async () => {
+    const { data } = await supabase
+      .from('workouts')
+      .select('scheduled_date')
+      .eq('student_id', student.id);
+    if (data) setOccupiedDates(data.map(d => d.scheduled_date));
   };
 
   const fetchLibrary = async () => {
@@ -222,21 +226,48 @@ export const RoutineBuilder = ({ student, onBack }) => {
 
         {/* Builder Column */}
         <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
-           {/* Mini History Info */}
-           {recentWorkouts.length > 0 && (
-             <div style={{ background: 'rgba(0,0,0,0.02)', padding: 'var(--space-sm)', borderRadius: '8px', fontSize: '0.75rem', display: 'flex', gap: 'var(--space-md)', overflowX: 'auto' }}>
-                <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>Días ocupados:</span>
-                {recentWorkouts.map(rw => (
+           {/* Unified Timeline Selector */}
+           <div style={{ display: 'flex', overflowX: 'auto', gap: 'var(--space-sm)', paddingBottom: 'var(--space-sm)', marginBottom: 'var(--space-md)', scrollbarWidth: 'none' }}>
+              {[-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].map(offset => {
+                const date = new Date();
+                date.setDate(date.getDate() + offset);
+                const dateStr = date.toISOString().split('T')[0];
+                const isSelected = dateStr === scheduledDate;
+                
+                return (
                   <button 
-                    key={rw.id} 
-                    onClick={() => setScheduledDate(rw.scheduled_date)}
-                    style={{ background: 'white', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '2px 6px', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                    key={offset}
+                    onClick={() => setScheduledDate(dateStr)}
+                    style={{ 
+                      flex: '0 0 50px', 
+                      padding: 'var(--space-xs)', 
+                      borderRadius: '8px', 
+                      background: isSelected ? 'var(--color-accent)' : 'white',
+                      color: isSelected ? 'white' : 'var(--color-text-main)',
+                      border: isSelected ? 'none' : '1px solid var(--color-border)',
+                      textAlign: 'center',
+                      cursor: 'pointer'
+                    }}
                   >
-                    {new Date(rw.scheduled_date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}
+                    <div style={{ fontSize: '0.5rem', textTransform: 'uppercase', opacity: 0.8 }}>
+                      {date.toLocaleDateString('es-ES', { weekday: 'short' })}
+                    </div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 700 }}>
+                      {date.getDate()}
+                    </div>
+                    {occupiedDates.includes(dateStr) && (
+                      <div style={{ 
+                        width: '4px', 
+                        height: '4px', 
+                        borderRadius: '50%', 
+                        background: isSelected ? 'white' : 'var(--color-accent)', 
+                        margin: '2px auto 0' 
+                      }} />
+                    )}
                   </button>
-                ))}
-             </div>
-           )}
+                );
+              })}
+           </div>
 
            {routine.length === 0 ? (
              <Card style={{ textAlign: 'center', padding: 'var(--space-xl)', borderStyle: 'dashed' }}>
