@@ -2,19 +2,28 @@ import React from 'react';
 import { AuthProvider, useAuth } from './components/auth/AuthProvider';
 import { Login } from './components/auth/Login';
 import { ResetPassword } from './components/auth/ResetPassword';
+import { TestUserCreator } from './components/auth/TestUserCreator';
 import { CoachDashboard } from './components/coach/CoachDashboard';
 import { StudentDashboard } from './components/student/StudentDashboard';
 
 function Main() {
   const { user, role, loading } = useAuth();
   const [isResetting, setIsResetting] = React.useState(false);
+  const [isDebug, setIsDebug] = React.useState(false);
 
   React.useEffect(() => {
     // Supabase recovery links usually come with a type=recovery hash
     if (window.location.hash.includes('type=recovery')) {
       setIsResetting(true);
     }
+    if (window.location.hash.includes('debug-users')) {
+      setIsDebug(true);
+    }
   }, []);
+
+  if (isDebug) {
+    return <TestUserCreator />;
+  }
 
   if (isResetting) {
     return <ResetPassword onComplete={() => setIsResetting(false)} />;
