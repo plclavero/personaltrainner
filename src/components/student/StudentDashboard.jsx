@@ -14,17 +14,21 @@ export const StudentDashboard = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [debugInfo, setDebugInfo] = useState({ userId: null, routineCount: 0, lastError: null });
 
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [debugInfo, setDebugInfo] = useState({ userId: null, routineCount: 0, lastError: null });
+
   useEffect(() => {
     fetchMyRoutine();
-  }, []);
+  }, [selectedDate]);
 
   const fetchMyRoutine = async () => {
     try {
-      console.log('🔍 Buscando rutina para ID:', user.id);
+      console.log('🔍 Buscando rutina para ID:', user.id, 'en fecha:', selectedDate);
       const { data: workout, error: wError } = await supabase
         .from('workouts')
         .select('id, name')
         .eq('student_id', user.id)
+        .eq('scheduled_date', selectedDate)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(); 
@@ -100,10 +104,45 @@ export const StudentDashboard = () => {
           <p style={{ color: 'var(--color-text-muted)' }}>{user.email}</p>
         </div>
 
+        {/* Timeline Selector */}
+        <div style={{ display: 'flex', overflowX: 'auto', gap: 'var(--space-md)', paddingBottom: 'var(--space-md)', marginBottom: 'var(--space-lg)', scrollbarWidth: 'none' }}>
+          {[-2, -1, 0, 1, 2, 3, 4].map(offset => {
+            const date = new Date();
+            date.setDate(date.getDate() + offset);
+            const dateStr = date.toISOString().split('T')[0];
+            const isToday = offset === 0;
+            const isSelected = dateStr === selectedDate;
+            
+            return (
+              <button 
+                key={offset}
+                onClick={() => setSelectedDate(dateStr)}
+                style={{ 
+                  flex: '0 0 60px', 
+                  padding: 'var(--space-sm)', 
+                  borderRadius: '12px', 
+                  background: isSelected ? 'var(--color-accent)' : 'white',
+                  color: isSelected ? 'white' : 'var(--color-text-main)',
+                  border: isSelected ? 'none' : '1px solid var(--color-border)',
+                  textAlign: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ fontSize: '0.625rem', textTransform: 'uppercase', opacity: 0.8 }}>
+                  {date.toLocaleDateString('es-ES', { weekday: 'short' })}
+                </div>
+                <div style={{ fontSize: '1.125rem', fontWeight: 700 }}>
+                  {date.getDate()}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
         {/* Current Routine */}
         <section style={{ marginBottom: 'var(--space-xl)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-            <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Tu Entrenamiento</h3>
+            <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Entrenamiento</h3>
             {workoutName && <span style={{ fontSize: '0.75rem', background: 'var(--color-accent)', color: 'white', padding: '4px 12px', borderRadius: '20px', fontWeight: 600 }}>{workoutName}</span>}
           </div>
           
@@ -116,70 +155,54 @@ export const StudentDashboard = () => {
               </div>
               <div style={{ flex: 1 }}>
                 <h3 style={{ fontSize: '1.125rem', marginBottom: '2px' }}>Sin asignación</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Tu coach aún no te ha asignado una rutina.</p>
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>No tienes ejercicios para esta fecha.</p>
               </div>
             </Card>
           ) : (
-            <div style={{ display: 'grid', gap: 'var(--space-xl)' }}>
-              {[1, 2, 3, 4, 5, 6, 7].map(dayNum => {
-                const dayExs = routine.filter(ex => ex.day_of_week === dayNum);
-                if (dayExs.length === 0) return null;
-
-                const dayNames = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-                
-                return (
-                  <div key={dayNum}>
-                    <h4 style={{ color: 'var(--color-accent)', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--space-md)', borderBottom: '1px solid var(--color-border)', paddingBottom: '4px' }}>
-                      {dayNames[dayNum]}
-                    </h4>
-                    <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
-                      {dayExs.map((item) => (
-                        <Card key={item.id} style={{ padding: '0', overflow: 'hidden', display: 'flex' }}>
-                           <div style={{ width: '100px', position: 'relative' }}>
-                              <img 
-                                src={`https://img.youtube.com/vi/${item.exercises?.yt_video_id}/mqdefault.jpg`} 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                alt={item.exercises?.title || 'Ejercicio'}
-                              />
-                              <div style={{ 
-                                position: 'absolute', 
-                                top: 0, 
-                                left: 0, 
-                                right: 0, 
-                                bottom: 0, 
-                                background: 'rgba(0,0,0,0.2)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'white'
-                              }}>
-                                <PlayCircle size={24} />
-                              </div>
-                           </div>
-                           <div style={{ flex: 1, padding: 'var(--space-md)' }}>
-                              <h4 style={{ margin: 0, fontSize: '1rem' }}>{item.exercises?.title || 'Ejercicio sin nombre'}</h4>
-                              <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: '8px' }}>
-                                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{item.series} series</span>
-                                <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>{item.reps} reps</span>
-                                <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                  <Clock size={12} /> {item.rest_secs}s
-                                </span>
-                              </div>
-                              <a 
-                                href={`https://youtube.com/watch?v=${item.exercises?.yt_video_id}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-accent)', marginTop: '8px', fontWeight: 600 }}
-                              >
-                                 <ExternalLink size={12} /> VER TÉCNICA
-                              </a>
-                           </div>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+            <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
+              {routine.map((item) => (
+                <Card key={item.id} style={{ padding: '0', overflow: 'hidden', display: 'flex' }}>
+                   <div style={{ width: '100px', position: 'relative' }}>
+                      <img 
+                        src={`https://img.youtube.com/vi/${item.exercises?.yt_video_id}/mqdefault.jpg`} 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        alt={item.exercises?.title || 'Ejercicio'}
+                      />
+                      <div style={{ 
+                        position: 'absolute', 
+                        top: 0, 
+                        left: 0, 
+                        right: 0, 
+                        bottom: 0, 
+                        background: 'rgba(0,0,0,0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white'
+                      }}>
+                        <PlayCircle size={24} />
+                      </div>
+                   </div>
+                   <div style={{ flex: 1, padding: 'var(--space-md)' }}>
+                      <h4 style={{ margin: 0, fontSize: '1rem' }}>{item.exercises?.title || 'Ejercicio sin nombre'}</h4>
+                      <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: '8px' }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{item.series} series</span>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>{item.reps} reps</span>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Clock size={12} /> {item.rest_secs}s
+                        </span>
+                      </div>
+                      <a 
+                        href={`https://youtube.com/watch?v=${item.exercises?.yt_video_id}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-accent)', marginTop: '8px', fontWeight: 600 }}
+                      >
+                         <ExternalLink size={12} /> VER TÉCNICA
+                      </a>
+                   </div>
+                </Card>
+              ))}
               
               <Button style={{ width: '100%', marginTop: 'var(--space-md)' }}>
                 <PlayCircle size={18} /> COMENZAR SESIÓN

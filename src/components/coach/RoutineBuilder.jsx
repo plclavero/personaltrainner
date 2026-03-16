@@ -11,9 +11,8 @@ export const RoutineBuilder = ({ student, onBack }) => {
   const [exercises, setExercises] = useState([]); // Library
   const [routine, setRoutine] = useState([]); // Exercises in workout
   const [workoutName, setWorkoutName] = useState('Nueva Rutina');
+  const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
-
-  const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
   useEffect(() => {
     fetchLibrary();
@@ -102,7 +101,8 @@ export const RoutineBuilder = ({ student, onBack }) => {
         .insert([{ 
             trainer_id: user.id, 
             student_id: student.id, 
-            name: workoutName 
+            name: workoutName,
+            scheduled_date: scheduledDate
         }])
         .select()
         .single();
@@ -185,19 +185,7 @@ export const RoutineBuilder = ({ student, onBack }) => {
                      <Trash2 size={18} />
                    </button>
                  </div>
-                 
-                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-md)' }}>
-                    <div className="form-group">
-                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Día</label>
-                      <select 
-                        value={ex.day_of_week}
-                        onChange={(e) => updateExercise(ex.id, 'day_of_week', parseInt(e.target.value))}
-                        className="input-base"
-                        style={{ padding: 'var(--space-sm)' }}
-                      >
-                        {days.map((d, i) => <option key={i} value={i+1}>{d}</option>)}
-                      </select>
-                    </div>
+                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-md)' }}>
                     <Input 
                       label="Series" 
                       value={ex.series} 
@@ -220,7 +208,7 @@ export const RoutineBuilder = ({ student, onBack }) => {
                         />
                       </div>
                     </div>
-                 </div>
+                  </div>
                </Card>
              ))
            )}
