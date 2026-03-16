@@ -62,24 +62,19 @@ export const RoutineBuilder = ({ student, onBack }) => {
   };
 
   const fetchExistingRoutine = async () => {
-    console.log('🧪 Debug RoutineBuilder: Buscando para alumno ID:', student.id);
     setLoading(true);
     try {
-      console.log('🧪 Debug RoutineBuilder: Buscando para alumno ID:', student.id, 'Fecha:', scheduledDate);
-      const { data: workout, error: wError } = await supabase
+      const { data: workout } = await supabase
         .from('workouts')
         .select('*')
         .eq('student_id', student.id)
         .eq('scheduled_date', scheduledDate)
-        .maybeSingle();
-
-      if (wError) console.error('❌ Error fetching workout header:', wError);
-      console.log('🧪 Debug RoutineBuilder: Resultado Workout:', workout);
+        .maybeSingle(); 
 
       if (workout) {
         setWorkoutName(workout.name);
         // 2. Get exercises
-        const { data: exData, error } = await supabase
+        const { data: exData } = await supabase
           .from('workout_exercises')
           .select('*, exercises(title, yt_video_id)')
           .eq('workout_id', workout.id)
@@ -98,7 +93,6 @@ export const RoutineBuilder = ({ student, onBack }) => {
           setRoutine(mappedRoutine);
         }
       } else {
-        // Reset if no workout found for this specific date
         setRoutine([]);
         setWorkoutName('Nueva Rutina');
       }
@@ -108,6 +102,7 @@ export const RoutineBuilder = ({ student, onBack }) => {
       setLoading(false);
     }
   };
+
 
   const addToRoutine = (exercise) => {
     setRoutine([...routine, { 
@@ -188,54 +183,71 @@ export const RoutineBuilder = ({ student, onBack }) => {
 
   return (
     <div>
-      <header style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
-        <button onClick={onBack} style={{ background: 'none', color: 'var(--color-text-muted)' }}>
-          <ArrowLeft size={24} />
-        </button>
-        <div style={{ flex: 1 }}>
-          <h2 style={{ margin: 0, fontSize: '1.125rem' }}>Rutina para {student.first_name || student.email}</h2>
-          <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', marginTop: '4px' }}>
-            <input 
-              value={workoutName} 
-              onChange={e => setWorkoutName(e.target.value)}
-              style={{ border: 'none', background: 'transparent', padding: 0, fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-accent)', outline: 'none' }}
-              placeholder="Nombre del entrenamiento"
-            />
-            <input 
-              type="date"
-              value={scheduledDate}
-              onChange={e => setScheduledDate(e.target.value)}
-              style={{ border: '1px solid var(--color-border)', borderRadius: '4px', padding: '2px 8px', fontSize: '0.875rem' }}
-            />
+      <header className="glass-effect" style={{ 
+        padding: '1.25rem 1.5rem', 
+        marginBottom: '2rem', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        borderRadius: '20px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button onClick={onBack} style={{ background: '#f1f5f9', color: 'var(--color-text-main)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>Rutina para {student.first_name || student.email.split('@')[0]}</h2>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '4px' }}>
+              <input 
+                value={workoutName} 
+                onChange={e => setWorkoutName(e.target.value)}
+                style={{ border: 'none', background: 'transparent', padding: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-accent)', outline: 'none' }}
+                placeholder="Nombre del entrenamiento"
+              />
+              <input 
+                type="date"
+                value={scheduledDate}
+                onChange={e => setScheduledDate(e.target.value)}
+                style={{ border: 'none', background: '#f1f5f9', borderRadius: '8px', padding: '4px 10px', fontSize: '0.8rem', fontWeight: 600 }}
+              />
+            </div>
           </div>
         </div>
-        <Button onClick={handleSave} disabled={loading || routine.length === 0}>
+        <button 
+          className="btn-primary btn-base" 
+          onClick={handleSave} 
+          disabled={loading || routine.length === 0}
+          style={{ height: '44px' }}
+        >
           <Save size={18} />
           {loading ? 'Guardando...' : 'Guardar y Asignar'}
-        </Button>
+        </button>
       </header>
 
-      <div style={{ display: 'grid', gap: 'var(--space-xl)', gridTemplateColumns: '1fr 2fr' }}>
-        {/* Biblioteca Column */}
-        <div>
-          <h3 style={{ marginBottom: 'var(--space-md)', fontSize: '1rem' }}>Tu Biblioteca</h3>
-          <div style={{ display: 'grid', gap: 'var(--space-sm)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 320px) 1fr', gap: '2rem', height: 'calc(100vh - 180px)' }}>
+        {/* Library Sidebar */}
+        <div className="premium-scroll" style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
+          <h3 style={{ marginBottom: '1.25rem', fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>BIBLIOTECA TÉCNICA</h3>
+          <div style={{ display: 'grid', gap: '0.75rem' }}>
             {exercises.map(ex => (
-              <Card key={ex.id} style={{ padding: 'var(--space-sm)', display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
-                <img src={`https://img.youtube.com/vi/${ex.yt_video_id}/default.jpg`} width="60" style={{ borderRadius: '4px' }} alt={ex.title} />
-                <span style={{ flex: 1, fontSize: '0.875rem', fontWeight: 500 }}>{ex.title}</span>
-                <button onClick={() => addToRoutine(ex)} style={{ background: 'none', color: 'var(--color-accent)' }}>
-                  <Plus size={20} />
+              <Card key={ex.id} style={{ padding: '0.75rem', display: 'flex', gap: '12px', alignItems: 'center', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', position: 'relative' }}>
+                <img src={`https://img.youtube.com/vi/${ex.yt_video_id}/default.jpg`} width="54" style={{ borderRadius: '8px' }} alt={ex.title} />
+                <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-main)', lineHeight: 1.3 }}>{ex.title}</span>
+                <button 
+                  onClick={() => addToRoutine(ex)} 
+                  style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--color-accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 8px rgba(79, 70, 229, 0.2)' }}
+                >
+                  <Plus size={18} />
                 </button>
               </Card>
             ))}
           </div>
         </div>
 
-        {/* Builder Column */}
-        <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
+        <div className="premium-scroll" style={{ overflowY: 'auto' }}>
            {/* Unified Timeline Selector */}
-           <div style={{ display: 'flex', overflowX: 'auto', gap: 'var(--space-sm)', paddingBottom: 'var(--space-sm)', marginBottom: 'var(--space-md)', scrollbarWidth: 'none' }}>
+           <div className="premium-scroll" style={{ display: 'flex', overflowX: 'auto', gap: '10px', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
               {[-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].map(offset => {
                 const date = new Date();
                 date.setDate(date.getDate() + offset);
@@ -247,25 +259,27 @@ export const RoutineBuilder = ({ student, onBack }) => {
                     key={offset}
                     onClick={() => setScheduledDate(dateStr)}
                     style={{ 
-                      flex: '0 0 50px', 
-                      height: '60px',
-                      padding: 'var(--space-xs)', 
-                      borderRadius: '8px', 
-                      background: isSelected ? 'var(--color-accent)' : 'white',
+                      flex: '0 0 54px', 
+                      height: '64px',
+                      padding: '8px 0', 
+                      borderRadius: '12px', 
+                      background: isSelected ? 'var(--grad-premium)' : 'white',
                       color: isSelected ? 'white' : 'var(--color-text-main)',
                       border: isSelected ? 'none' : '1px solid var(--color-border)',
+                      boxShadow: isSelected ? '0 8px 15px -3px rgba(79, 70, 229, 0.3)' : 'none',
                       textAlign: 'center',
                       cursor: 'pointer',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'center',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      transition: 'all 0.2s ease'
                     }}
                   >
-                    <div style={{ fontSize: '0.5rem', textTransform: 'uppercase', opacity: 0.8 }}>
+                    <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', opacity: isSelected ? 0.9 : 0.6, fontWeight: 700 }}>
                       {date.toLocaleDateString('es-ES', { weekday: 'short' })}
                     </div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: 700 }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 700 }}>
                       {date.getDate()}
                     </div>
                     {occupiedDates.includes(dateStr) && (
@@ -274,7 +288,7 @@ export const RoutineBuilder = ({ student, onBack }) => {
                         height: '4px', 
                         borderRadius: '50%', 
                         background: isSelected ? 'white' : 'var(--color-accent)', 
-                        margin: '2px auto 0' 
+                        marginTop: '4px' 
                       }} />
                     )}
                   </button>
@@ -283,45 +297,72 @@ export const RoutineBuilder = ({ student, onBack }) => {
            </div>
 
            {routine.length === 0 ? (
-             <Card style={{ textAlign: 'center', padding: 'var(--space-xl)', borderStyle: 'dashed' }}>
-                <Dumbbell size={48} style={{ opacity: 0.1, marginBottom: 'var(--space-md)' }} />
-                <p style={{ color: 'var(--color-text-muted)' }}>Click en [+] en la biblioteca para añadir ejercicios.</p>
+             <Card style={{ 
+               textAlign: 'center', 
+               padding: '4rem 2rem', 
+               border: '2px dashed var(--color-border)', 
+               background: 'transparent',
+               display: 'flex',
+               flexDirection: 'column',
+               alignItems: 'center',
+               gap: '1rem'
+             }}>
+               <div style={{ width: '56px', height: '56px', background: '#f1f5f9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                 <Dumbbell size={28} style={{ color: 'var(--color-text-muted)' }} />
+               </div>
+               <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', maxWidth: '280px' }}>Pulsa [+] en la biblioteca para añadir ejercicios a este día.</p>
              </Card>
            ) : (
-             routine.map((ex) => (
-               <Card key={ex.id}>
-                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-                   <h4 style={{ margin: 0 }}>{ex.title}</h4>
-                   <button onClick={() => removeFromRoutine(ex.id)} style={{ background: 'none', color: 'var(--color-danger)' }}>
-                     <Trash2 size={18} />
-                   </button>
-                 </div>
-                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-md)' }}>
-                    <Input 
-                      label="Series" 
-                      value={ex.series} 
-                      onChange={e => updateExercise(ex.id, 'series', e.target.value)} 
-                    />
-                    <Input 
-                      label="Reps" 
-                      value={ex.reps} 
-                      onChange={e => updateExercise(ex.id, 'reps', e.target.value)} 
-                    />
-                    <div className="form-group">
-                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Descanso (s)</label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', background: 'var(--color-bg-main)', padding: 'var(--space-sm)', borderRadius: 'var(--radius-main)' }}>
-                        <Clock size={14} style={{ color: 'var(--color-text-muted)' }} />
-                        <input 
-                           type="number"
-                           value={ex.rest_secs} 
-                           onChange={e => updateExercise(ex.id, 'rest_secs', parseInt(e.target.value))}
-                           style={{ background: 'none', border: 'none', width: '100%', outline: 'none', fontSize: '0.875rem' }}
+             <div style={{ display: 'grid', gap: '1rem' }}>
+              {routine.map((ex, index) => (
+                <Card key={ex.id} style={{ padding: '1.25rem', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', position: 'relative' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                      <div style={{ background: 'var(--color-accent)', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.8rem', fontWeight: 700 }}>
+                        {index + 1}
+                      </div>
+                      <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--color-primary)' }}>{ex.title}</h4>
+                    </div>
+                    <button onClick={() => removeFromRoutine(ex.id)} style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.05)', padding: '6px', borderRadius: '8px' }}>
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>SERIES</label>
+                      <Input 
+                        value={ex.series} 
+                        onChange={(e) => updateExercise(ex.id, 'series', e.target.value)}
+                        placeholder="3"
+                        style={{ background: '#f8fafc' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>REPS</label>
+                      <Input 
+                        value={ex.reps} 
+                        onChange={(e) => updateExercise(ex.id, 'reps', e.target.value)}
+                        placeholder="12"
+                        style={{ background: '#f8fafc' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>DESCANSO (S)</label>
+                      <div style={{ position: 'relative' }}>
+                        <Input 
+                          value={ex.rest_secs} 
+                          onChange={(e) => updateExercise(ex.id, 'rest_secs', e.target.value)}
+                          placeholder="60"
+                          style={{ background: '#f8fafc', paddingLeft: '2.25rem' }}
                         />
+                        <Clock size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
                       </div>
                     </div>
                   </div>
-               </Card>
-             ))
+                </Card>
+              ))}
+             </div>
            )}
         </div>
       </div>

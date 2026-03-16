@@ -27,20 +27,28 @@ export const CoachDashboard = () => {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--color-bg-main)' }}>
-      {/* Sidebar */}
-      <aside style={{ 
-        width: '260px', 
+      {/* Premium Sidebar */}
+      <aside className="glass-effect" style={{ 
+        width: '280px', 
         background: 'var(--color-primary)', 
         color: 'white',
-        padding: 'var(--space-xl) var(--space-md)',
+        padding: '2.5rem 1.5rem',
         display: 'flex',
         flexDirection: 'column',
         position: 'sticky',
-        top: 0
+        top: 0,
+        height: '100vh',
+        borderRight: 'none',
+        borderRadius: '0 32px 32px 0'
       }}>
-        <div style={{ marginBottom: 'var(--space-xl)', padding: '0 var(--space-md)' }}>
-          <h2 style={{ color: 'white', fontSize: '1.25rem' }}>Profe Panel</h2>
-          <p style={{ fontSize: '0.75rem', opacity: 0.6 }}>{user.email}</p>
+        <div style={{ marginBottom: '3rem', padding: '0 0.5rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '40px', height: '40px', background: 'var(--grad-premium)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <TrendingUp size={24} color="white" />
+          </div>
+          <div>
+            <h2 style={{ color: 'white', fontSize: '1.25rem', margin: 0 }}>Profe Panel</h2>
+            <p style={{ fontSize: '0.7rem', opacity: 0.5, letterSpacing: '0.05em' }}>{user.email.split('@')[0].toUpperCase()}</p>
+          </div>
         </div>
 
         <nav style={{ flex: 1 }}>
@@ -92,25 +100,29 @@ export const CoachDashboard = () => {
         </header>
 
         {activeTab === 'dashboard' && (
-          <div style={{ display: 'grid', gap: 'var(--space-lg)', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-            <Card>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-md)' }}>
-                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Alumnos Activos</span>
-                <Users size={20} style={{ color: 'var(--color-accent)' }} />
+          <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+            <Card style={{ border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.04)', padding: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                <div style={{ background: '#e0e7ff', width: '48px', height: '48px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)' }}>
+                  <Users size={24} />
+                </div>
+                <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.05em' }}>ALUMNOS</span>
               </div>
-              <span style={{ fontSize: '2rem', fontWeight: 700 }}>...</span>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: 'var(--space-sm)' }}>
-                Gestión en tiempo real de tus atletas.
+              <span style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'Outfit' }}>...</span>
+              <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '1rem', lineHeight: 1.5 }}>
+                Atletas bajo tu supervisión. Sigue su progreso diario.
               </p>
             </Card>
-            <Card>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-md)' }}>
-                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Biblioteca</span>
-                <Video size={20} style={{ color: 'var(--color-accent)' }} />
+            <Card style={{ border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.04)', padding: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                <div style={{ background: '#f5f3ff', width: '48px', height: '48px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
+                  <Video size={24} />
+                </div>
+                <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.05em' }}>BIBLIOTECA</span>
               </div>
-              <span style={{ fontSize: '2rem', fontWeight: 700 }}>...</span>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: 'var(--space-sm)' }}>
-                Videos técnicos sincronizados.
+              <span style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'Outfit' }}>...</span>
+              <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '1rem', lineHeight: 1.5 }}>
+                Ejercicios grabados y listos para asignar.
               </p>
             </Card>
           </div>

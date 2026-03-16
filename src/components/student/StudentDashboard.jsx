@@ -15,7 +15,7 @@ export const StudentDashboard = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [occupiedDates, setOccupiedDates] = useState([]); 
   const [activeVideo, setActiveVideo] = useState(null); // ID del video de YouTube
-  const [debugInfo, setDebugInfo] = useState({ userId: null, routineCount: 0, lastError: null });
+
 
   useEffect(() => {
     fetchMyRoutine();
@@ -32,8 +32,7 @@ export const StudentDashboard = () => {
 
   const fetchMyRoutine = async () => {
     try {
-      console.log('🔍 Buscando rutina para ID:', user.id, 'en fecha:', selectedDate);
-      const { data: workout, error: wError } = await supabase
+      const { data: workout } = await supabase
         .from('workouts')
         .select('id, name')
         .eq('student_id', user.id)
@@ -41,9 +40,6 @@ export const StudentDashboard = () => {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(); 
-      
-      if (wError) console.error('❌ Error en workouts:', wError);
-      console.log('📄 Workout hallado:', workout);
 
       if (workout) {
         // 2. Get exercises for this workout
@@ -63,15 +59,14 @@ export const StudentDashboard = () => {
         const validRoutine = (workoutExs || []).filter(item => item.exercises);
         setRoutine(validRoutine);
         setWorkoutName(workout.name);
-        setDebugInfo(prev => ({ ...prev, userId: user.id, routineCount: validRoutine.length }));
       } else {
         setRoutine([]);
         setWorkoutName('');
-        setDebugInfo(prev => ({ ...prev, userId: user.id, routineCount: 0, lastError: 'No workout found' }));
       }
     } catch (err) {
+
       console.error('Error fetching routine:', err);
-      setDebugInfo(prev => ({ ...prev, userId: user.id, lastError: err.message }));
+
     } finally {
       setLoading(false);
     }
