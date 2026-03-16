@@ -13,11 +13,21 @@ export const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [occupiedDates, setOccupiedDates] = useState([]); // [ '2026-03-15', ... ]
   const [debugInfo, setDebugInfo] = useState({ userId: null, routineCount: 0, lastError: null });
 
   useEffect(() => {
     fetchMyRoutine();
+    fetchOccupiedDates();
   }, [selectedDate]);
+
+  const fetchOccupiedDates = async () => {
+    const { data } = await supabase
+      .from('workouts')
+      .select('scheduled_date')
+      .eq('student_id', user.id);
+    if (data) setOccupiedDates(data.map(d => d.scheduled_date));
+  };
 
   const fetchMyRoutine = async () => {
     try {
@@ -132,6 +142,15 @@ export const StudentDashboard = () => {
                 <div style={{ fontSize: '1.125rem', fontWeight: 700 }}>
                   {date.getDate()}
                 </div>
+                {occupiedDates.includes(dateStr) && (
+                  <div style={{ 
+                    width: '4px', 
+                    height: '4px', 
+                    borderRadius: '50%', 
+                    background: isSelected ? 'white' : 'var(--color-accent)', 
+                    margin: '2px auto 0' 
+                  }} />
+                )}
               </button>
             );
           })}

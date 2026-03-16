@@ -10,17 +10,28 @@ export const RoutineBuilder = ({ student, onBack }) => {
   const { user } = useAuth();
   const [exercises, setExercises] = useState([]); // Library
   const [routine, setRoutine] = useState([]); // Exercises in workout
-  const [workoutName, setWorkoutName] = useState('Nueva Rutina');
   const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
+  const [recentWorkouts, setRecentWorkouts] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchLibrary();
+    fetchHistory();
   }, []);
 
   useEffect(() => {
     fetchExistingRoutine();
   }, [scheduledDate]);
+
+  const fetchHistory = async () => {
+    const { data } = await supabase
+      .from('workouts')
+      .select('id, name, scheduled_date')
+      .eq('student_id', student.id)
+      .order('scheduled_date', { ascending: false })
+      .limit(5);
+    if (data) setRecentWorkouts(data);
+  };
 
   const fetchLibrary = async () => {
     const { data } = await supabase.from('exercises').select('*');
@@ -198,6 +209,22 @@ export const RoutineBuilder = ({ student, onBack }) => {
 
         {/* Builder Column */}
         <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
+           {/* Mini History Info */}
+           {recentWorkouts.length > 0 && (
+             <div style={{ background: 'rgba(0,0,0,0.02)', padding: 'var(--space-sm)', borderRadius: '8px', fontSize: '0.75rem', display: 'flex', gap: 'var(--space-md)', overflowX: 'auto' }}>
+                <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>Días ocupados:</span>
+                {recentWorkouts.map(rw => (
+                  <button 
+                    key={rw.id} 
+                    onClick={() => setScheduledDate(rw.scheduled_date)}
+                    style={{ background: 'white', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '2px 6px', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  >
+                    {new Date(rw.scheduled_date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}
+                  </button>
+                ))}
+             </div>
+           )}
+
            {routine.length === 0 ? (
              <Card style={{ textAlign: 'center', padding: 'var(--space-xl)', borderStyle: 'dashed' }}>
                 <Dumbbell size={48} style={{ opacity: 0.1, marginBottom: 'var(--space-md)' }} />
