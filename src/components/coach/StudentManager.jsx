@@ -120,8 +120,13 @@ export const StudentManager = ({ onSelectStudent }) => {
                 <User size={24} />
               </div>
               <div style={{ flex: 1 }}>
-                <h4 style={{ margin: 0 }}>{student.full_name || student.email}</h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginTop: '4px' }}>
+                <h4 style={{ margin: 0, fontSize: '1.125rem' }}>
+                  {student.first_name ? `${student.first_name} ${student.last_name}` : 'Nuevo Alumno'}
+                </h4>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                  {student.email}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginTop: '8px' }}>
                   <Activity size={14} className="status-green" />
                   <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Activo hoy</span>
                 </div>
