@@ -8,10 +8,18 @@ import { ArrowLeft, Save, Plus, Trash2, Clock, Dumbbell } from 'lucide-react';
 
 export const RoutineBuilder = ({ student, onBack }) => {
   const { user } = useAuth();
+  const getLocalDateISO = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [exercises, setExercises] = useState([]); // Library
   const [routine, setRoutine] = useState([]); // Exercises in workout
   const [workoutName, setWorkoutName] = useState('Nueva Rutina');
-  const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
+  const [scheduledDate, setScheduledDate] = useState(getLocalDateISO());
+
   const [occupiedDates, setOccupiedDates] = useState([]); // List of dates with workouts
   const [recentWorkouts, setRecentWorkouts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -173,7 +181,8 @@ export const RoutineBuilder = ({ student, onBack }) => {
       alert('Rutina actualizada y asignada! 🏋️‍♂️');
       fetchHistory(); // Refresh labels
       fetchOccupiedDates(); // Refresh dots
-      onBack();
+      // Ya no llamamos a onBack() para permitir seguir editando
+
     } catch (err) {
       alert(err.message);
     } finally {
@@ -251,8 +260,12 @@ export const RoutineBuilder = ({ student, onBack }) => {
               {[-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].map(offset => {
                 const date = new Date();
                 date.setDate(date.getDate() + offset);
-                const dateStr = date.toISOString().split('T')[0];
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const dateStr = `${year}-${month}-${day}`;
                 const isSelected = dateStr === scheduledDate;
+
                 
                 return (
                   <button 

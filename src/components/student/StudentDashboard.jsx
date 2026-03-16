@@ -8,13 +8,21 @@ import { ProfileSettings } from '../common/ProfileSettings';
 
 export const StudentDashboard = () => {
   const { user } = useAuth();
+  const getLocalDateISO = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [routine, setRoutine] = useState([]);
   const [workoutName, setWorkoutName] = useState('');
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getLocalDateISO());
   const [occupiedDates, setOccupiedDates] = useState([]); 
   const [activeVideo, setActiveVideo] = useState(null); // ID del video de YouTube
+
 
 
   useEffect(() => {
@@ -146,8 +154,12 @@ export const StudentDashboard = () => {
           {[-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].map(offset => {
             const date = new Date();
             date.setDate(date.getDate() + offset);
-            const dateStr = date.toISOString().split('T')[0];
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
             const isSelected = dateStr === selectedDate;
+
             
             return (
               <button 
