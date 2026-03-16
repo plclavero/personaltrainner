@@ -23,7 +23,7 @@ export const StudentDashboard = () => {
         .eq('student_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle(); // Use maybeSingle to avoid 406 errors if empty
 
       if (workout) {
         // 2. Get exercises for this workout
@@ -72,7 +72,9 @@ export const StudentDashboard = () => {
 
       <main style={{ padding: 'var(--space-lg)', maxWidth: '600px', margin: '0 auto' }}>
         <div style={{ marginBottom: 'var(--space-xl)' }}>
-          <h1 style={{ fontSize: '1.5rem', marginBottom: 'var(--space-xs)' }}>¡Hola! 👋</h1>
+          <h1 style={{ fontSize: '1.5rem', marginBottom: 'var(--space-xs)' }}>
+            ¡Hola, {user.first_name || 'Atleta'}! 👋
+          </h1>
           <p style={{ color: 'var(--color-text-muted)' }}>{user.email}</p>
         </div>
 

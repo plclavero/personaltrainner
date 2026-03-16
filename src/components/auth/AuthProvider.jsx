@@ -28,11 +28,12 @@ export const AuthProvider = ({ children }) => {
       try {
         const { data } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, first_name, last_name, phone')
           .eq('id', user.id)
           .single();
         
         setRole(data?.role ?? 'student');
+        setUser({ ...user, ...data }); // Enriquecer objeto user con datos de perfil
       } catch (e) {
         setRole('student');
       }

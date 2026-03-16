@@ -8,6 +8,9 @@ import { LogIn, UserPlus } from 'lucide-react';
 export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [role, setRole] = useState('student'); // trainer or student
@@ -25,15 +28,23 @@ export const Login = () => {
         alert('Enlace de recuperación enviado. Revisa tu email.');
         setIsForgotPassword(false);
       } else if (isRegistering) {
+        if (!firstName || !lastName || !phone) {
+          throw new Error('Por favor completa todos los campos.');
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { role }
+            data: { 
+              role,
+              first_name: firstName,
+              last_name: lastName,
+              phone: phone
+            }
           }
         });
         if (error) throw error;
-        alert('Registro exitoso. Revisa tu email para confirmar.');
+        alert('Registro exitoso. ¡Bienvenido!');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -98,29 +109,56 @@ export const Login = () => {
 
         <form onSubmit={handleAuth}>
           {isRegistering && (
-            <div style={{ marginBottom: 'var(--space-md)' }}>
-              <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.875rem', fontWeight: 600 }}>
-                ¿Cuál es tu rol?
-              </label>
-              <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
-                <Button 
-                  type="button"
-                  variant={role === 'student' ? 'primary' : 'secondary'}
-                  onClick={() => setRole('student')}
-                  style={{ flex: 1, padding: 'var(--space-sm)' }}
-                >
-                  Alumno
-                </Button>
-                <Button 
-                   type="button"
-                  variant={role === 'trainer' ? 'primary' : 'secondary'}
-                  onClick={() => setRole('trainer')}
-                  style={{ flex: 1, padding: 'var(--space-sm)' }}
-                >
-                  Entrenador
-                </Button>
+            <>
+              <div style={{ marginBottom: 'var(--space-md)' }}>
+                <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.875rem', fontWeight: 600 }}>
+                  ¿Cuál es tu rol?
+                </label>
+                <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
+                  <Button 
+                    type="button"
+                    variant={role === 'student' ? 'primary' : 'secondary'}
+                    onClick={() => setRole('student')}
+                    style={{ flex: 1, padding: 'var(--space-sm)' }}
+                  >
+                    Alumno
+                  </Button>
+                  <Button 
+                    type="button"
+                    variant={role === 'trainer' ? 'primary' : 'secondary'}
+                    onClick={() => setRole('trainer')}
+                    style={{ flex: 1, padding: 'var(--space-sm)' }}
+                  >
+                    Entrenador
+                  </Button>
+                </div>
               </div>
-            </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
+                <Input 
+                  label="Nombre" 
+                  required 
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Juan" 
+                />
+                <Input 
+                  label="Apellido" 
+                  required 
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Pérez" 
+                />
+              </div>
+
+              <Input 
+                label="WhatsApp / Celular" 
+                required 
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+54 9 11 ..." 
+              />
+            </>
           )}
 
           <Input 
