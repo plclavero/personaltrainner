@@ -65,6 +65,8 @@ export const StudentDashboard = () => {
         setWorkoutName(workout.name);
         setDebugInfo(prev => ({ ...prev, userId: user.id, routineCount: validRoutine.length }));
       } else {
+        setRoutine([]);
+        setWorkoutName('');
         setDebugInfo(prev => ({ ...prev, userId: user.id, routineCount: 0, lastError: 'No workout found' }));
       }
     } catch (err) {

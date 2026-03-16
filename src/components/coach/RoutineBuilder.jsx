@@ -176,7 +176,8 @@ export const RoutineBuilder = ({ student, onBack }) => {
       if (exError) throw exError;
 
       alert('Rutina actualizada y asignada! 🏋️‍♂️');
-      fetchHistory(); // Refresh history
+      fetchHistory(); // Refresh labels
+      fetchOccupiedDates(); // Refresh dots
       onBack();
     } catch (err) {
       alert(err.message);
@@ -247,13 +248,18 @@ export const RoutineBuilder = ({ student, onBack }) => {
                     onClick={() => setScheduledDate(dateStr)}
                     style={{ 
                       flex: '0 0 50px', 
+                      height: '60px',
                       padding: 'var(--space-xs)', 
                       borderRadius: '8px', 
                       background: isSelected ? 'var(--color-accent)' : 'white',
                       color: isSelected ? 'white' : 'var(--color-text-main)',
                       border: isSelected ? 'none' : '1px solid var(--color-border)',
                       textAlign: 'center',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center'
                     }}
                   >
                     <div style={{ fontSize: '0.5rem', textTransform: 'uppercase', opacity: 0.8 }}>
