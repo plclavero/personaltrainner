@@ -8,14 +8,24 @@ import { ArrowLeft, Save, Plus, Trash2, Clock, Dumbbell, GripVertical, Library, 
 import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 import { ExerciseManager } from './ExerciseManager';
 
-const DroppableColumn = ({ id, title, children, count }) => {
+const DroppableColumn = ({ id, title, children, count, onAddClick }) => {
   const { isOver, setNodeRef } = useDroppable({ id });
   return (
     <div ref={setNodeRef} style={{ background: isOver ? '#f1f5f9' : 'transparent', borderRadius: '16px', padding: '0.75rem', minHeight: '60vh', display: 'flex', flexDirection: 'column', gap: '0.75rem', border: '1px dashed', borderColor: isOver ? 'var(--color-primary)' : 'var(--color-border)', transition: 'all 0.2s' }}>
       <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text-muted)', marginBottom: '0.5rem', paddingBottom: '0.5rem', borderBottom: '2px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {title} <span style={{ fontSize: '0.7rem', background: '#e2e8f0', color: '#64748b', padding: '2px 8px', borderRadius: '12px' }}>{count}</span>
       </h3>
-      {children}
+      {count === 0 ? (
+        <div 
+           onClick={onAddClick}
+           style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed var(--color-border)', borderRadius: '12px', color: '#94a3b8', cursor: 'pointer', background: 'rgba(248, 250, 252, 0.5)', padding: '2rem' }}
+        >
+          <Plus size={24} style={{ marginBottom: '8px', opacity: 0.5 }} />
+          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, textAlign: 'center' }}>Pulsa aquí para añadir ejercicios</p>
+        </div>
+      ) : (
+        children
+      )}
     </div>
   );
 };
@@ -39,14 +49,14 @@ const DraggableCard = ({ ex, onRemove, onUpdate }) => {
           </button>
         </div>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           <div>
             <label style={{ fontSize: '0.55rem', fontWeight: 800, color: '#94a3b8', display: 'block', textAlign: 'center', marginBottom: '2px' }}>SETS</label>
             <Input 
               value={ex.series} 
               onChange={(e) => onUpdate(ex.id, 'series', e.target.value)}
               placeholder="3"
-              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center' }}
+              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center', width: '100%', minWidth: '0' }}
             />
           </div>
           <div>
@@ -55,7 +65,7 @@ const DraggableCard = ({ ex, onRemove, onUpdate }) => {
               value={ex.reps} 
               onChange={(e) => onUpdate(ex.id, 'reps', e.target.value)}
               placeholder="12"
-              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center' }}
+              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center', width: '100%', minWidth: '0' }}
             />
           </div>
           <div>
@@ -64,7 +74,7 @@ const DraggableCard = ({ ex, onRemove, onUpdate }) => {
               value={ex.weight || ''} 
               onChange={(e) => onUpdate(ex.id, 'weight', e.target.value)}
               placeholder="-"
-              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center' }}
+              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center', width: '100%', minWidth: '0' }}
             />
           </div>
           <div>
@@ -73,7 +83,7 @@ const DraggableCard = ({ ex, onRemove, onUpdate }) => {
               value={ex.rest_secs} 
               onChange={(e) => onUpdate(ex.id, 'rest_secs', e.target.value)}
               placeholder="60s"
-              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center' }}
+              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center', width: '100%', minWidth: '0' }}
             />
           </div>
         </div>
@@ -284,13 +294,13 @@ export const RoutineBuilder = ({ student, onBack }) => {
       {/* DND Board */}
       <DndContext onDragEnd={handleDragEnd}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', flex: 1 }}>
-          <DroppableColumn id="warmup" title="🔥 Calentamiento" count={warmupEx.length}>
+          <DroppableColumn id="warmup" title="🔥 Calentamiento" count={warmupEx.length} onAddClick={() => setShowLibrary(true)}>
             {warmupEx.map((ex, i) => <DraggableCard key={ex.id} index={i} ex={ex} onRemove={removeFromRoutine} onUpdate={updateExercise} />)}
           </DroppableColumn>
-          <DroppableColumn id="main" title="⚡ Bloque Principal" count={mainEx.length}>
+          <DroppableColumn id="main" title="⚡ Bloque Principal" count={mainEx.length} onAddClick={() => setShowLibrary(true)}>
             {mainEx.map((ex, i) => <DraggableCard key={ex.id} index={i} ex={ex} onRemove={removeFromRoutine} onUpdate={updateExercise} />)}
           </DroppableColumn>
-          <DroppableColumn id="cooldown" title="🧘 Vuelta a la Calma" count={cooldownEx.length}>
+          <DroppableColumn id="cooldown" title="🧘 Vuelta a la Calma" count={cooldownEx.length} onAddClick={() => setShowLibrary(true)}>
             {cooldownEx.map((ex, i) => <DraggableCard key={ex.id} index={i} ex={ex} onRemove={removeFromRoutine} onUpdate={updateExercise} />)}
           </DroppableColumn>
         </div>
