@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
-import { ExerciseManager } from './ExerciseManager';
+import { Library } from './Library';
 import { StudentManager } from './StudentManager';
 import { RoutineBuilder } from './RoutineBuilder';
 import { ProfileSettings } from '../common/ProfileSettings';
@@ -130,7 +130,7 @@ export const CoachDashboard = () => {
 
         {activeTab === 'students' && <StudentManager onSelectStudent={(s) => setSelectedStudent(s)} />}
 
-        {activeTab === 'exercises' && <ExerciseManager />}
+        {activeTab === 'exercises' && <Library />}
 
         {activeTab === 'settings' && <ProfileSettings onSave={() => setActiveTab('dashboard')} />}
       </main>
