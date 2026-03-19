@@ -95,6 +95,8 @@ export const RoutineBuilder = ({ student, onBack }) => {
             exercise_id: item.exercise_id,
             series: item.series,
             reps: item.reps,
+            weight: item.weight || '',
+            block: item.block || 'main',
             rest_secs: item.rest_secs,
             workout_id: item.workout_id
           }));
@@ -120,6 +122,8 @@ export const RoutineBuilder = ({ student, onBack }) => {
       day_of_week: 1, 
       series: '3', 
       reps: '12', 
+      weight: '',
+      block: 'main',
       rest_secs: 60 
     }]);
   };
@@ -171,6 +175,8 @@ export const RoutineBuilder = ({ student, onBack }) => {
         exercise_id: item.exercise_id,
         series: item.series,
         reps: item.reps,
+        weight: item.weight,
+        block: item.block,
         rest_secs: item.rest_secs,
         order_index: index
       }));
@@ -326,55 +332,89 @@ export const RoutineBuilder = ({ student, onBack }) => {
                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', maxWidth: '280px' }}>Pulsa [+] en la biblioteca para añadir ejercicios a este día.</p>
              </Card>
            ) : (
-             <div style={{ display: 'grid', gap: '1rem' }}>
-              {routine.map((ex, index) => (
-                <Card key={ex.id} style={{ padding: '1.25rem', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', position: 'relative' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                      <div style={{ background: 'var(--color-accent)', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.8rem', fontWeight: 700 }}>
-                        {index + 1}
-                      </div>
-                      <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--color-primary)' }}>{ex.title}</h4>
-                    </div>
-                    <button onClick={() => removeFromRoutine(ex.id)} style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.05)', padding: '6px', borderRadius: '8px' }}>
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>SERIES</label>
-                      <Input 
-                        value={ex.series} 
-                        onChange={(e) => updateExercise(ex.id, 'series', e.target.value)}
-                        placeholder="3"
-                        style={{ background: '#f8fafc' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>REPS</label>
-                      <Input 
-                        value={ex.reps} 
-                        onChange={(e) => updateExercise(ex.id, 'reps', e.target.value)}
-                        placeholder="12"
-                        style={{ background: '#f8fafc' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>DESCANSO (S)</label>
-                      <div style={{ position: 'relative' }}>
-                        <Input 
-                          value={ex.rest_secs} 
-                          onChange={(e) => updateExercise(ex.id, 'rest_secs', e.target.value)}
-                          placeholder="60"
-                          style={{ background: '#f8fafc', paddingLeft: '2.25rem' }}
-                        />
-                        <Clock size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+             <div>
+               {['warmup', 'main', 'cooldown'].map(blockKey => {
+                 const blockExercises = routine.filter(e => e.block === blockKey);
+                 if (blockExercises.length === 0 && blockKey !== 'main') return null;
+                 return (
+                   <div key={blockKey} style={{ marginBottom: '2rem' }}>
+                     <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-muted)', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '2px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                       {blockKey === 'warmup' ? '🔥 Calentamiento' : blockKey === 'main' ? '⚡ Bloque Principal' : '🧘 Vuelta a la Calma'}
+                       <span style={{ fontSize: '0.7rem', background: '#e2e8f0', color: '#64748b', padding: '2px 8px', borderRadius: '12px' }}>{blockExercises.length}</span>
+                     </h3>
+                     <div style={{ display: 'grid', gap: '1rem' }}>
+                      {blockExercises.map((ex, index) => (
+                        <Card key={ex.id} style={{ padding: '1.25rem', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', position: 'relative' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                              <div style={{ background: 'var(--color-accent)', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.8rem', fontWeight: 700, marginTop: '2px' }}>
+                                {index + 1}
+                              </div>
+                              <div>
+                                <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--color-primary)', fontWeight: 700, lineHeight: 1.2 }}>{ex.title}</h4>
+                                <select 
+                                  value={ex.block} 
+                                  onChange={(e) => updateExercise(ex.id, 'block', e.target.value)}
+                                  style={{ marginTop: '6px', fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px dashed var(--color-border)', background: 'transparent', color: 'var(--color-text-muted)', cursor: 'pointer', outline: 'none' }}
+                                >
+                                  <option value="warmup">Mover a Calentamiento</option>
+                                  <option value="main">Mover a Principal</option>
+                                  <option value="cooldown">Mover a Vuelta a la calma</option>
+                                </select>
+                              </div>
+                            </div>
+                            <button onClick={() => removeFromRoutine(ex.id)} style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.05)', padding: '6px', borderRadius: '8px', cursor: 'pointer', border: 'none' }}>
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                          
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>SERIES</label>
+                              <Input 
+                                value={ex.series} 
+                                onChange={(e) => updateExercise(ex.id, 'series', e.target.value)}
+                                placeholder="3"
+                                style={{ background: '#f8fafc', padding: '0.5rem' }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>REPS</label>
+                              <Input 
+                                value={ex.reps} 
+                                onChange={(e) => updateExercise(ex.id, 'reps', e.target.value)}
+                                placeholder="12"
+                                style={{ background: '#f8fafc', padding: '0.5rem' }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>PESO</label>
+                              <Input 
+                                value={ex.weight || ''} 
+                                onChange={(e) => updateExercise(ex.id, 'weight', e.target.value)}
+                                placeholder="10kg"
+                                style={{ background: '#f8fafc', padding: '0.5rem' }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px', whiteSpace: 'nowrap' }}>REST (S)</label>
+                              <div style={{ position: 'relative' }}>
+                                <Input 
+                                  value={ex.rest_secs} 
+                                  onChange={(e) => updateExercise(ex.id, 'rest_secs', e.target.value)}
+                                  placeholder="60"
+                                  style={{ background: '#f8fafc', padding: '0.5rem', paddingLeft: '1.8rem' }}
+                                />
+                                <Clock size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                     </div>
+                   </div>
+                 );
+               })}
              </div>
            )}
         </div>
