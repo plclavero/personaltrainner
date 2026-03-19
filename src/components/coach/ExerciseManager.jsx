@@ -1,145 +1,186 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../auth/AuthProvider';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
-import { Video, Plus, Trash2, ExternalLink } from 'lucide-react';
+import { X, Youtube, Loader2, Save } from 'lucide-react';
 
-export const ExerciseManager = () => {
-  const { user } = useAuth();
-  const [exercises, setExercises] = useState([]);
-  const [ytUrl, setYtUrl] = useState('');
-  const [title, setTitle] = useState('');
-  const [loading, setLoading] = useState(false);
+export const ExerciseManager = ({ isOpen, onClose, onExerciseAdded }) => {
+  const [url, setUrl] = useState('');
+  const [loadingYt, setLoadingYt] = useState(false);
+  const [saving, setSaving] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    yt_video_id: '',
+    muscle_group: 'Pecho',
+    default_block: 'main',
+    duration: ''
+  });
 
-  useEffect(() => {
-    fetchExercises();
-  }, []);
+  const MUSCLE_GROUPS = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Movilidad', 'Cardio', 'Full Body'];
+  const BLOCKS = [
+    { value: 'warmup', label: 'Calentamiento' },
+    { value: 'main', label: 'Principal' },
+    { value: 'cooldown', label: 'Vuelta a la calma' }
+  ];
 
-  const fetchExercises = async () => {
-    const { data, error } = await supabase
-      .from('exercises')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) console.error('Error fetching exercises:', error);
-    else setExercises(data);
+  if (!isOpen) return null;
+
+  const extractYTId = (link) => {
+    const match = link.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&]{11})/);
+    return match ? match[1] : null;
   };
 
-  const getYoutubeId = (url) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
-  };
-
-  const handleAddExercise = async (e) => {
-    e.preventDefault();
-    const videoId = getYoutubeId(ytUrl);
-    
+  const handleUrlBlur = async () => {
+    if (!url) return;
+    const videoId = extractYTId(url);
     if (!videoId) {
-      alert('Por favor, ingresa una URL de YouTube válida.');
+      alert('Link de YouTube inválido');
       return;
     }
 
-    setLoading(true);
-    try {
-      const { error } = await supabase.from('exercises').insert([
-        {
-          trainer_id: user.id,
-          yt_video_id: videoId,
-          title: title || 'Nuevo Ejercicio',
-          description: '',
-        }
-      ]);
+    setFormData(prev => ({ ...prev, yt_video_id: videoId }));
+    setLoadingYt(true);
 
-      if (error) throw error;
-      
-      setYtUrl('');
-      setTitle('');
-      fetchExercises();
-    } catch (err) {
-      alert('Error al guardar el ejercicio: ' + err.message);
+    try {
+      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+      if (!apiKey) throw new Error('Falta configuración de API Key');
+
+      // YouTube API fetch
+      const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${apiKey}`);
+      const data = await res.json();
+
+      if (data.items && data.items.length > 0) {
+        const snippet = data.items[0].snippet;
+        const rawDuration = data.items[0].contentDetails.duration;
+        
+        let parsedDuration = '';
+        const match = rawDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+        if (match) {
+          const h = match[1] ? parseInt(match[1]) : 0;
+          const m = match[2] ? parseInt(match[2]) : 0;
+          const s = match[3] ? parseInt(match[3]) : 0;
+          const totalMins = h * 60 + m;
+          parsedDuration = `${totalMins}:${s.toString().padStart(2, '0')}`;
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          title: snippet.title,
+          description: snippet.description ? snippet.description.substring(0, 200) : '',
+          duration: parsedDuration
+        }));
+      } else {
+        alert('No se encontró información del video');
+      }
+    } catch (error) {
+      console.error('Error fetching YouTube data:', error);
+      alert('Error obteniendo datos de YouTube. ' + error.message);
     } finally {
-      setLoading(false);
+      setLoadingYt(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar este ejercicio?')) return;
-    
-    const { error } = await supabase.from('exercises').delete().eq('id', id);
-    if (error) alert(error.message);
-    else fetchExercises();
+  const handleSave = async () => {
+    if (!formData.title || !formData.yt_video_id) {
+      alert('El título y video son obligatorios');
+      return;
+    }
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.from('exercises').insert([formData]).select().single();
+      if (error) throw error;
+      
+      if (onExerciseAdded) onExerciseAdded(data);
+      setUrl('');
+      setFormData({ title: '', description: '', yt_video_id: '', muscle_group: 'Pecho', default_block: 'main', duration: '' });
+      onClose();
+    } catch (error) {
+      alert('Error al guardar: ' + error.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div style={{ display: 'grid', gap: 'var(--space-xl)', gridTemplateColumns: '1fr 2fr' }}>
-      {/* Formulario */}
-      <div>
-        <Card>
-          <h3 style={{ marginBottom: 'var(--space-md)' }}>Añadir Ejercicio</h3>
-          <form onSubmit={handleAddExercise}>
-            <Input 
-              label="Link de YouTube" 
-              placeholder="https://www.youtube.com/watch?v=..." 
-              value={ytUrl}
-              onChange={(e) => setYtUrl(e.target.value)}
-              required
-            />
-            <Input 
-              label="Título del Ejercicio" 
-              placeholder="Ej: Sentadilla Goblet" 
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-            <Button type="submit" style={{ width: '100%' }} disabled={loading}>
-              <Plus size={18} />
-              {loading ? 'Guardando...' : 'Añadir a Biblioteca'}
-            </Button>
-          </form>
-        </Card>
-      </div>
-
-      {/* Lista de Ejercicios */}
-      <div style={{ display: 'grid', gap: 'var(--space-md)', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
-        {exercises.length === 0 ? (
-          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 'var(--space-xl)', color: 'var(--color-text-muted)' }}>
-            <Video size={48} style={{ marginBottom: 'var(--space-md)', opacity: 0.3 }} />
-            <p>Aún no tienes ejercicios en tu biblioteca.</p>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+      <Card style={{ width: '100%', maxWidth: '500px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '50%' }}>
+          <X size={20} style={{ color: 'var(--color-text-muted)' }} />
+        </button>
+        
+        <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-primary)' }}>
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '12px', display: 'flex', color: '#ef4444' }}>
+             <Youtube size={22} />
           </div>
-        ) : (
-          exercises.map((ex) => (
-            <Card key={ex.id} style={{ padding: 0, overflow: 'hidden' }}>
-              <img 
-                src={`https://img.youtube.com/vi/${ex.yt_video_id}/mqdefault.jpg`} 
-                alt={ex.title} 
-                style={{ width: '100%', height: '140px', objectFit: 'cover' }}
+          Añadir Ejercicio
+        </h2>
+
+        <div style={{ display: 'grid', gap: '1.25rem' }}>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px' }}>LINK DE YOUTUBE</label>
+            <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
+              <Input 
+                value={url} 
+                onChange={e => setUrl(e.target.value)} 
+                onBlur={handleUrlBlur}
+                placeholder="https://youtu.be/..." 
+                style={{ flex: 1, paddingRight: loadingYt ? '40px' : '16px' }}
               />
-              <div style={{ padding: 'var(--space-md)' }}>
-                <h4 style={{ marginBottom: 'var(--space-xs)', fontSize: '1rem' }}>{ex.title}</h4>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--space-md)' }}>
-                   <a 
-                    href={`https://youtube.com/watch?v=${ex.yt_video_id}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ color: 'var(--color-accent)', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    <ExternalLink size={14} /> Ver Video
-                  </a>
-                  <button 
-                    onClick={() => handleDelete(ex.id)}
-                    style={{ background: 'none', color: 'var(--color-danger)', cursor: 'pointer' }}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            </Card>
-          ))
-        )}
-      </div>
+              {loadingYt && <Loader2 size={18} className="animate-spin text-primary" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent)' }} />}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '6px' }}>Pega el link y haz clic fuera del cuadro para extraer los datos.</p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px' }}>TÍTULO</label>
+              <Input 
+                value={formData.title} 
+                onChange={e => setFormData(prev => ({...prev, title: e.target.value}))} 
+                placeholder="Ej. Sentadilla con Barra" 
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px' }}>DURACIÓN</label>
+              <Input 
+                value={formData.duration} 
+                onChange={e => setFormData(prev => ({...prev, duration: e.target.value}))} 
+                placeholder="Ej. 1:15" 
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px' }}>GRUPO MUSCULAR</label>
+              <select 
+                value={formData.muscle_group}
+                onChange={e => setFormData(prev => ({...prev, muscle_group: e.target.value}))}
+                style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', border: '1px solid var(--color-border)', outline: 'none', fontSize: '0.95rem', background: '#f8fafc', color: 'var(--color-text-main)', cursor: 'pointer' }}
+              >
+                {MUSCLE_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px' }}>MOMENTO SUGERIDO</label>
+              <select 
+                value={formData.default_block}
+                onChange={e => setFormData(prev => ({...prev, default_block: e.target.value}))}
+                style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', border: '1px solid var(--color-border)', outline: 'none', fontSize: '0.95rem', background: '#f8fafc', color: 'var(--color-text-main)', cursor: 'pointer' }}
+              >
+                {BLOCKS.map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <Button onClick={handleSave} disabled={saving || !formData.title} className="btn-primary" style={{ marginTop: '1rem', height: '48px', fontSize: '1rem' }}>
+            {saving ? <Loader2 className="animate-spin" /> : <><Save size={18} /> Guardar en Biblioteca</>}
+          </Button>
+        </div>
+      </Card>
     </div>
   );
 };

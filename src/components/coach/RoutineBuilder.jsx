@@ -4,7 +4,83 @@ import { useAuth } from '../auth/AuthProvider';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
-import { ArrowLeft, Save, Plus, Trash2, Clock, Dumbbell } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Clock, Dumbbell, GripVertical, Library, X } from 'lucide-react';
+import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
+import { ExerciseManager } from './ExerciseManager';
+
+const DroppableColumn = ({ id, title, children, count }) => {
+  const { isOver, setNodeRef } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} style={{ background: isOver ? '#f1f5f9' : 'transparent', borderRadius: '16px', padding: '0.75rem', minHeight: '60vh', display: 'flex', flexDirection: 'column', gap: '0.75rem', border: '1px dashed', borderColor: isOver ? 'var(--color-primary)' : 'var(--color-border)', transition: 'all 0.2s' }}>
+      <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text-muted)', marginBottom: '0.5rem', paddingBottom: '0.5rem', borderBottom: '2px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {title} <span style={{ fontSize: '0.7rem', background: '#e2e8f0', color: '#64748b', padding: '2px 8px', borderRadius: '12px' }}>{count}</span>
+      </h3>
+      {children}
+    </div>
+  );
+};
+
+const DraggableCard = ({ ex, onRemove, onUpdate }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: ex.id });
+  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 999, opacity: 0.9, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' } : undefined;
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card style={{ padding: '0.75rem', border: '1px solid var(--color-border)', boxShadow: isDragging ? '0 10px 20px rgba(0,0,0,0.1)' : '0 2px 4px rgba(0,0,0,0.02)', position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div {...listeners} {...attributes} style={{ cursor: 'grab', color: '#94a3b8', display: 'flex', alignItems: 'center', padding: '2px' }}>
+              <GripVertical size={16} />
+            </div>
+            <h4 style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-primary)', fontWeight: 700, lineHeight: 1.2 }}>{ex.title}</h4>
+          </div>
+          <button onClick={() => onRemove(ex.id)} style={{ color: '#ef4444', background: 'transparent', padding: '4px', border: 'none', cursor: 'pointer' }}>
+            <X size={16} />
+          </button>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+          <div>
+            <label style={{ fontSize: '0.55rem', fontWeight: 800, color: '#94a3b8', display: 'block', textAlign: 'center', marginBottom: '2px' }}>SETS</label>
+            <Input 
+              value={ex.series} 
+              onChange={(e) => onUpdate(ex.id, 'series', e.target.value)}
+              placeholder="3"
+              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center' }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.55rem', fontWeight: 800, color: '#94a3b8', display: 'block', textAlign: 'center', marginBottom: '2px' }}>REPS</label>
+            <Input 
+              value={ex.reps} 
+              onChange={(e) => onUpdate(ex.id, 'reps', e.target.value)}
+              placeholder="12"
+              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center' }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.55rem', fontWeight: 800, color: '#94a3b8', display: 'block', textAlign: 'center', marginBottom: '2px' }}>KG/LB</label>
+            <Input 
+              value={ex.weight || ''} 
+              onChange={(e) => onUpdate(ex.id, 'weight', e.target.value)}
+              placeholder="-"
+              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center' }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.55rem', fontWeight: 800, color: '#94a3b8', display: 'block', textAlign: 'center', marginBottom: '2px' }}>REST</label>
+            <Input 
+              value={ex.rest_secs} 
+              onChange={(e) => onUpdate(ex.id, 'rest_secs', e.target.value)}
+              placeholder="60s"
+              style={{ background: '#f8fafc', padding: '0.4rem', fontSize: '0.8rem', textAlign: 'center' }}
+            />
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
 
 export const RoutineBuilder = ({ student, onBack }) => {
   const { user } = useAuth();
@@ -20,9 +96,13 @@ export const RoutineBuilder = ({ student, onBack }) => {
   const [workoutName, setWorkoutName] = useState('Nueva Rutina');
   const [scheduledDate, setScheduledDate] = useState(getLocalDateISO());
 
-  const [occupiedDates, setOccupiedDates] = useState([]); // List of dates with workouts
+  const [occupiedDates, setOccupiedDates] = useState([]);
   const [recentWorkouts, setRecentWorkouts] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // UI States
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [showManager, setShowManager] = useState(false);
 
   useEffect(() => {
     fetchLibrary();
@@ -35,14 +115,8 @@ export const RoutineBuilder = ({ student, onBack }) => {
   }, [scheduledDate]);
 
   const fetchHistory = async () => {
-    const { data } = await supabase
-      .from('workouts')
-      .select('id, name, scheduled_date')
-      .eq('student_id', student.id)
-      .order('scheduled_date', { ascending: true });
-
+    const { data } = await supabase.from('workouts').select('id, name, scheduled_date').eq('student_id', student.id).order('scheduled_date', { ascending: true });
     if (data) {
-      // Filtrar duplicados de fecha (solo mostrar una entrada por día en la cintilla)
       const uniqueDays = [];
       const seenDates = new Set();
       data.forEach(w => {
@@ -57,41 +131,26 @@ export const RoutineBuilder = ({ student, onBack }) => {
   };
 
   const fetchOccupiedDates = async () => {
-    const { data } = await supabase
-      .from('workouts')
-      .select('scheduled_date')
-      .eq('student_id', student.id);
+    const { data } = await supabase.from('workouts').select('scheduled_date').eq('student_id', student.id);
     if (data) setOccupiedDates(data.map(d => d.scheduled_date));
   };
 
   const fetchLibrary = async () => {
-    const { data } = await supabase.from('exercises').select('*');
+    const { data } = await supabase.from('exercises').select('*').order('title', { ascending: true });
     if (data) setExercises(data);
   };
 
   const fetchExistingRoutine = async () => {
     setLoading(true);
     try {
-      const { data: workout } = await supabase
-        .from('workouts')
-        .select('*')
-        .eq('student_id', student.id)
-        .eq('scheduled_date', scheduledDate)
-        .maybeSingle(); 
-
+      const { data: workout } = await supabase.from('workouts').select('*').eq('student_id', student.id).eq('scheduled_date', scheduledDate).maybeSingle(); 
       if (workout) {
         setWorkoutName(workout.name);
-        // 2. Get exercises
-        const { data: exData } = await supabase
-          .from('workout_exercises')
-          .select('*, exercises(title, yt_video_id)')
-          .eq('workout_id', workout.id)
-          .order('order_index', { ascending: true });
-
+        const { data: exData } = await supabase.from('workout_exercises').select('*, exercises(title, yt_video_id)').eq('workout_id', workout.id).order('order_index', { ascending: true });
         if (exData) {
           const mappedRoutine = exData.map(item => ({
             ...item.exercises,
-            id: item.id,
+            id: item.id.toString(), // Needs string for Dnd
             exercise_id: item.exercise_id,
             series: item.series,
             reps: item.reps,
@@ -113,63 +172,46 @@ export const RoutineBuilder = ({ student, onBack }) => {
     }
   };
 
-
   const addToRoutine = (exercise) => {
+    const newId = `temp-${Math.random().toString(36).substr(2, 9)}`;
     setRoutine([...routine, { 
       ...exercise, 
-      id: `temp-${Math.random().toString(36).substr(2, 9)}`, 
+      id: newId, 
       exercise_id: exercise.id,
-      day_of_week: 1, 
       series: '3', 
       reps: '12', 
       weight: '',
-      block: 'main',
+      block: exercise.default_block || 'main',
       rest_secs: 60 
     }]);
   };
 
-  const removeFromRoutine = (id) => {
-    setRoutine(routine.filter(item => item.id !== id));
-  };
+  const removeFromRoutine = (id) => setRoutine(routine.filter(item => item.id !== id));
+  const updateExercise = (id, field, value) => setRoutine(routine.map(item => item.id === id ? { ...item, [field]: value } : item));
 
-  const updateExercise = (id, field, value) => {
-    setRoutine(routine.map(item => item.id === id ? { ...item, [field]: value } : item));
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (over && ['warmup', 'main', 'cooldown'].includes(over.id)) {
+      updateExercise(active.id, 'block', over.id);
+    }
   };
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      // 1. Check if workout exists for this date to update or insert
-      const { data: existingWorkout } = await supabase
-        .from('workouts')
-        .select('id')
-        .eq('student_id', student.id)
-        .eq('scheduled_date', scheduledDate)
-        .maybeSingle();
-
+      const { data: existingWorkout } = await supabase.from('workouts').select('id').eq('student_id', student.id).eq('scheduled_date', scheduledDate).maybeSingle();
       let workoutId;
 
       if (existingWorkout) {
         workoutId = existingWorkout.id;
         await supabase.from('workouts').update({ name: workoutName }).eq('id', workoutId);
-        // Clean up exercises to re-insert (simpler than syncing)
         await supabase.from('workout_exercises').delete().eq('workout_id', workoutId);
       } else {
-        const { data: newWorkout, error: wError } = await supabase
-          .from('workouts')
-          .insert([{ 
-              trainer_id: user.id, 
-              student_id: student.id, 
-              name: workoutName,
-              scheduled_date: scheduledDate
-          }])
-          .select()
-          .single();
+        const { data: newWorkout, error: wError } = await supabase.from('workouts').insert([{ trainer_id: user.id, student_id: student.id, name: workoutName, scheduled_date: scheduledDate }]).select().single();
         if (wError) throw wError;
         workoutId = newWorkout.id;
       }
 
-      // 2. Insert Exercises
       const exercisesToInsert = routine.map((item, index) => ({
         workout_id: workoutId,
         exercise_id: item.exercise_id,
@@ -185,10 +227,8 @@ export const RoutineBuilder = ({ student, onBack }) => {
       if (exError) throw exError;
 
       alert('Rutina actualizada y asignada! 🏋️‍♂️');
-      fetchHistory(); // Refresh labels
-      fetchOccupiedDates(); // Refresh dots
-      // Ya no llamamos a onBack() para permitir seguir editando
-
+      fetchHistory();
+      fetchOccupiedDates();
     } catch (err) {
       alert(err.message);
     } finally {
@@ -196,229 +236,115 @@ export const RoutineBuilder = ({ student, onBack }) => {
     }
   };
 
+  const warmupEx = routine.filter(e => e.block === 'warmup');
+  const mainEx = routine.filter(e => e.block === 'main');
+  const cooldownEx = routine.filter(e => e.block === 'cooldown');
+
   return (
-    <div>
-      <header className="glass-effect" style={{ 
-        padding: '1.25rem 1.5rem', 
-        marginBottom: '2rem', 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        borderRadius: '20px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
-      }}>
+    <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <header className="glass-effect" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button onClick={onBack} style={{ background: '#f1f5f9', color: 'var(--color-text-main)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={onBack} style={{ background: '#f1f5f9', color: 'var(--color-text-main)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
             <ArrowLeft size={20} />
           </button>
           <div>
             <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>Rutina para {student.first_name || student.email.split('@')[0]}</h2>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '4px' }}>
-              <input 
-                value={workoutName} 
-                onChange={e => setWorkoutName(e.target.value)}
-                style={{ border: 'none', background: 'transparent', padding: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-accent)', outline: 'none' }}
-                placeholder="Nombre del entrenamiento"
-              />
-              <input 
-                type="date"
-                value={scheduledDate}
-                onChange={e => setScheduledDate(e.target.value)}
-                style={{ border: 'none', background: '#f1f5f9', borderRadius: '8px', padding: '4px 10px', fontSize: '0.8rem', fontWeight: 600 }}
-              />
+              <input value={workoutName} onChange={e => setWorkoutName(e.target.value)} style={{ border: 'none', background: 'transparent', padding: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-accent)', outline: 'none' }} placeholder="Nombre del entrenamiento" />
+              <input type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)} style={{ border: 'none', background: '#f1f5f9', borderRadius: '8px', padding: '4px 10px', fontSize: '0.8rem', fontWeight: 600 }} />
             </div>
           </div>
         </div>
-        <button 
-          className="btn-primary btn-base" 
-          onClick={handleSave} 
-          disabled={loading || routine.length === 0}
-          style={{ height: '44px' }}
-        >
-          <Save size={18} />
-          {loading ? 'Guardando...' : 'Guardar y Asignar'}
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <Button variant="secondary" onClick={() => setShowLibrary(true)} style={{ height: '44px' }}>
+            <Library size={18} /> Añadir Ejercicios
+          </Button>
+          <Button onClick={handleSave} disabled={loading || routine.length === 0} style={{ height: '44px' }}>
+            <Save size={18} /> {loading ? 'Guardando...' : 'Guardar y Asignar'}
+          </Button>
+        </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 320px) 1fr', gap: '2rem', height: 'calc(100vh - 180px)' }}>
-        {/* Library Sidebar */}
-        <div className="premium-scroll" style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
-          <h3 style={{ marginBottom: '1.25rem', fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>BIBLIOTECA TÉCNICA</h3>
-          <div style={{ display: 'grid', gap: '0.75rem' }}>
-            {exercises.map(ex => (
-              <Card key={ex.id} style={{ padding: '0.75rem', display: 'flex', gap: '12px', alignItems: 'center', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', position: 'relative' }}>
-                <img src={`https://img.youtube.com/vi/${ex.yt_video_id}/default.jpg`} width="54" style={{ borderRadius: '8px' }} alt={ex.title} />
-                <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-main)', lineHeight: 1.3 }}>{ex.title}</span>
-                <button 
-                  onClick={() => addToRoutine(ex)} 
-                  style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--color-accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 8px rgba(79, 70, 229, 0.2)' }}
-                >
-                  <Plus size={18} />
-                </button>
-              </Card>
-            ))}
+      {/* Unified Timeline Selector */}
+      <div className="premium-scroll" style={{ display: 'flex', overflowX: 'auto', gap: '10px', paddingBottom: '0.5rem', marginBottom: '1.5rem' }}>
+        {[-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].map(offset => {
+          const date = new Date(); date.setDate(date.getDate() + offset);
+          const dateStr = getLocalDateISO(date);
+          const isSelected = dateStr === scheduledDate;
+          return (
+            <button key={offset} onClick={() => setScheduledDate(dateStr)} style={{ flex: '0 0 54px', height: '64px', padding: '8px 0', borderRadius: '12px', background: isSelected ? 'var(--grad-premium)' : 'white', color: isSelected ? 'white' : 'var(--color-text-main)', border: isSelected ? 'none' : '1px solid var(--color-border)', boxShadow: isSelected ? '0 8px 15px -3px rgba(79, 70, 229, 0.3)' : 'none', textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+              <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', opacity: isSelected ? 0.9 : 0.6, fontWeight: 700 }}>{date.toLocaleDateString('es-ES', { weekday: 'short' })}</div>
+              <div style={{ fontSize: '1rem', fontWeight: 700 }}>{date.getDate()}</div>
+              {occupiedDates.includes(dateStr) && <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: isSelected ? 'white' : 'var(--color-accent)', marginTop: '4px' }} />}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* DND Board */}
+      <DndContext onDragEnd={handleDragEnd}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', flex: 1 }}>
+          <DroppableColumn id="warmup" title="🔥 Calentamiento" count={warmupEx.length}>
+            {warmupEx.map((ex, i) => <DraggableCard key={ex.id} index={i} ex={ex} onRemove={removeFromRoutine} onUpdate={updateExercise} />)}
+          </DroppableColumn>
+          <DroppableColumn id="main" title="⚡ Bloque Principal" count={mainEx.length}>
+            {mainEx.map((ex, i) => <DraggableCard key={ex.id} index={i} ex={ex} onRemove={removeFromRoutine} onUpdate={updateExercise} />)}
+          </DroppableColumn>
+          <DroppableColumn id="cooldown" title="🧘 Vuelta a la Calma" count={cooldownEx.length}>
+            {cooldownEx.map((ex, i) => <DraggableCard key={ex.id} index={i} ex={ex} onRemove={removeFromRoutine} onUpdate={updateExercise} />)}
+          </DroppableColumn>
+        </div>
+      </DndContext>
+
+      {/* Floating Library Sidebar */}
+      {showLibrary && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ width: '360px', background: 'white', height: '100%', display: 'flex', flexDirection: 'column', boxShadow: '-10px 0 30px rgba(0,0,0,0.1)', animation: 'slideIn 0.3s ease-out' }}>
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Biblioteca Técnica</h3>
+              <button onClick={() => setShowLibrary(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={20} className="text-muted" /></button>
+            </div>
+            
+            <div style={{ padding: '1rem' }}>
+               <Button variant="secondary" onClick={() => setShowManager(true)} style={{ width: '100%' }}>
+                  <Plus size={16} /> Crear Nuevo Ejercicio
+               </Button>
+            </div>
+
+            <div className="premium-scroll" style={{ padding: '1rem', overflowY: 'auto', flex: 1, display: 'grid', gap: '0.75rem' }}>
+              {exercises.map(ex => (
+                <Card key={ex.id} style={{ padding: '0.75rem', display: 'flex', gap: '12px', alignItems: 'center', border: '1px solid var(--color-border)', boxShadow: 'none' }}>
+                  {ex.yt_video_id ? (
+                    <img src={`https://img.youtube.com/vi/${ex.yt_video_id}/default.jpg`} width="54" style={{ borderRadius: '8px', objectFit: 'cover' }} alt={ex.title} />
+                  ) : (
+                    <div style={{ width: '54px', height: '40px', background: '#e2e8f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Dumbbell size={16} color="#94a3b8" />
+                    </div>
+                  )}
+                  <div style={{ flex: 1 }}>
+                    <span style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-main)', lineHeight: 1.2 }}>{ex.title}</span>
+                    <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>{ex.muscle_group || 'General'}</span>
+                  </div>
+                  <button onClick={() => addToRoutine(ex)} style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--color-accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
+                    <Plus size={18} />
+                  </button>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="premium-scroll" style={{ overflowY: 'auto' }}>
-           {/* Unified Timeline Selector */}
-           <div className="premium-scroll" style={{ display: 'flex', overflowX: 'auto', gap: '10px', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
-              {[-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].map(offset => {
-                const date = new Date();
-                date.setDate(date.getDate() + offset);
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const dateStr = `${year}-${month}-${day}`;
-                const isSelected = dateStr === scheduledDate;
+      {/* Exercise ABM Modal */}
+      <ExerciseManager 
+        isOpen={showManager} 
+        onClose={() => setShowManager(false)} 
+        onExerciseAdded={(newEx) => {
+          setExercises([...exercises, newEx].sort((a,b) => a.title.localeCompare(b.title)));
+          setShowManager(false);
+        }} 
+      />
 
-                
-                return (
-                  <button 
-                    key={offset}
-                    onClick={() => setScheduledDate(dateStr)}
-                    style={{ 
-                      flex: '0 0 54px', 
-                      height: '64px',
-                      padding: '8px 0', 
-                      borderRadius: '12px', 
-                      background: isSelected ? 'var(--grad-premium)' : 'white',
-                      color: isSelected ? 'white' : 'var(--color-text-main)',
-                      border: isSelected ? 'none' : '1px solid var(--color-border)',
-                      boxShadow: isSelected ? '0 8px 15px -3px rgba(79, 70, 229, 0.3)' : 'none',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', opacity: isSelected ? 0.9 : 0.6, fontWeight: 700 }}>
-                      {date.toLocaleDateString('es-ES', { weekday: 'short' })}
-                    </div>
-                    <div style={{ fontSize: '1rem', fontWeight: 700 }}>
-                      {date.getDate()}
-                    </div>
-                    {occupiedDates.includes(dateStr) && (
-                      <div style={{ 
-                        width: '4px', 
-                        height: '4px', 
-                        borderRadius: '50%', 
-                        background: isSelected ? 'white' : 'var(--color-accent)', 
-                        marginTop: '4px' 
-                      }} />
-                    )}
-                  </button>
-                );
-              })}
-           </div>
-
-           {routine.length === 0 ? (
-             <Card style={{ 
-               textAlign: 'center', 
-               padding: '4rem 2rem', 
-               border: '2px dashed var(--color-border)', 
-               background: 'transparent',
-               display: 'flex',
-               flexDirection: 'column',
-               alignItems: 'center',
-               gap: '1rem'
-             }}>
-               <div style={{ width: '56px', height: '56px', background: '#f1f5f9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                 <Dumbbell size={28} style={{ color: 'var(--color-text-muted)' }} />
-               </div>
-               <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', maxWidth: '280px' }}>Pulsa [+] en la biblioteca para añadir ejercicios a este día.</p>
-             </Card>
-           ) : (
-             <div>
-               {['warmup', 'main', 'cooldown'].map(blockKey => {
-                 const blockExercises = routine.filter(e => e.block === blockKey);
-                 if (blockExercises.length === 0 && blockKey !== 'main') return null;
-                 return (
-                   <div key={blockKey} style={{ marginBottom: '2rem' }}>
-                     <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-muted)', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '2px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                       {blockKey === 'warmup' ? '🔥 Calentamiento' : blockKey === 'main' ? '⚡ Bloque Principal' : '🧘 Vuelta a la Calma'}
-                       <span style={{ fontSize: '0.7rem', background: '#e2e8f0', color: '#64748b', padding: '2px 8px', borderRadius: '12px' }}>{blockExercises.length}</span>
-                     </h3>
-                     <div style={{ display: 'grid', gap: '1rem' }}>
-                      {blockExercises.map((ex, index) => (
-                        <Card key={ex.id} style={{ padding: '1.25rem', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', position: 'relative' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                              <div style={{ background: 'var(--color-accent)', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.8rem', fontWeight: 700, marginTop: '2px' }}>
-                                {index + 1}
-                              </div>
-                              <div>
-                                <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--color-primary)', fontWeight: 700, lineHeight: 1.2 }}>{ex.title}</h4>
-                                <select 
-                                  value={ex.block} 
-                                  onChange={(e) => updateExercise(ex.id, 'block', e.target.value)}
-                                  style={{ marginTop: '6px', fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px dashed var(--color-border)', background: 'transparent', color: 'var(--color-text-muted)', cursor: 'pointer', outline: 'none' }}
-                                >
-                                  <option value="warmup">Mover a Calentamiento</option>
-                                  <option value="main">Mover a Principal</option>
-                                  <option value="cooldown">Mover a Vuelta a la calma</option>
-                                </select>
-                              </div>
-                            </div>
-                            <button onClick={() => removeFromRoutine(ex.id)} style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.05)', padding: '6px', borderRadius: '8px', cursor: 'pointer', border: 'none' }}>
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                          
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>SERIES</label>
-                              <Input 
-                                value={ex.series} 
-                                onChange={(e) => updateExercise(ex.id, 'series', e.target.value)}
-                                placeholder="3"
-                                style={{ background: '#f8fafc', padding: '0.5rem' }}
-                              />
-                            </div>
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>REPS</label>
-                              <Input 
-                                value={ex.reps} 
-                                onChange={(e) => updateExercise(ex.id, 'reps', e.target.value)}
-                                placeholder="12"
-                                style={{ background: '#f8fafc', padding: '0.5rem' }}
-                              />
-                            </div>
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px' }}>PESO</label>
-                              <Input 
-                                value={ex.weight || ''} 
-                                onChange={(e) => updateExercise(ex.id, 'weight', e.target.value)}
-                                placeholder="10kg"
-                                style={{ background: '#f8fafc', padding: '0.5rem' }}
-                              />
-                            </div>
-                            <div>
-                              <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 700, marginBottom: '6px', whiteSpace: 'nowrap' }}>REST (S)</label>
-                              <div style={{ position: 'relative' }}>
-                                <Input 
-                                  value={ex.rest_secs} 
-                                  onChange={(e) => updateExercise(ex.id, 'rest_secs', e.target.value)}
-                                  placeholder="60"
-                                  style={{ background: '#f8fafc', padding: '0.5rem', paddingLeft: '1.8rem' }}
-                                />
-                                <Clock size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
-                              </div>
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                     </div>
-                   </div>
-                 );
-               })}
-             </div>
-           )}
-        </div>
-      </div>
     </div>
   );
 };
