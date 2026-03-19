@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
-import { Plus, Dumbbell, Edit2 } from 'lucide-react';
+import { Plus, Dumbbell, Pencil } from 'lucide-react';
 import { ExerciseManager } from './ExerciseManager';
 
 export const Library = () => {
@@ -59,7 +59,7 @@ export const Library = () => {
               </div>
             </div>
             <button onClick={() => openEditExercise(ex)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', color: 'var(--color-text-muted)', borderRadius: '50%' }} title="Editar Ejercicio">
-              <Edit2 size={16} />
+              <Pencil size={16} />
             </button>
           </Card>
         ))}
