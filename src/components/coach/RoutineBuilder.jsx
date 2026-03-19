@@ -349,8 +349,8 @@ export const RoutineBuilder = ({ student, onBack }) => {
       <ExerciseManager 
         isOpen={showManager} 
         onClose={() => setShowManager(false)} 
-        onExerciseAdded={(newEx) => {
-          setExercises([...exercises, newEx].sort((a,b) => a.title.localeCompare(b.title)));
+        onExerciseSaved={(savedEx) => {
+          setExercises([...exercises, savedEx].sort((a,b) => a.title.localeCompare(b.title)));
           setShowManager(false);
         }} 
       />

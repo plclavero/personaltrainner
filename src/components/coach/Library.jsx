@@ -2,12 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
-import { Plus, Dumbbell } from 'lucide-react';
+import { Plus, Dumbbell, Edit2 } from 'lucide-react';
 import { ExerciseManager } from './ExerciseManager';
 
 export const Library = () => {
   const [exercises, setExercises] = useState([]);
   const [showManager, setShowManager] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState(null);
+
+  const openNewExercise = () => {
+    setSelectedExercise(null);
+    setShowManager(true);
+  };
+
+  const openEditExercise = (ex) => {
+    setSelectedExercise(ex);
+    setShowManager(true);
+  };
 
   useEffect(() => {
     fetchLibrary();
@@ -25,7 +36,7 @@ export const Library = () => {
           <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>Tu Base de Conocimientos</h2>
           <p style={{ color: 'var(--color-text-muted)', margin: '4px 0 0 0', fontSize: '0.9rem' }}>Gestiona los ejercicios disponibles para tus alumnos.</p>
         </div>
-        <Button onClick={() => setShowManager(true)} className="btn-primary" style={{ padding: '0.75rem 1.5rem' }}>
+        <Button onClick={openNewExercise} className="btn-primary" style={{ padding: '0.75rem 1.5rem' }}>
           <Plus size={18} /> Añadir Ejercicio Mágico
         </Button>
       </div>
@@ -47,6 +58,9 @@ export const Library = () => {
                 <span style={{ fontSize: '0.65rem', background: '#f1f5f9', color: '#64748b', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>{ex.duration || '-'}</span>
               </div>
             </div>
+            <button onClick={() => openEditExercise(ex)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', color: 'var(--color-text-muted)', borderRadius: '50%' }} title="Editar Ejercicio">
+              <Edit2 size={16} />
+            </button>
           </Card>
         ))}
       </div>
@@ -54,8 +68,13 @@ export const Library = () => {
       <ExerciseManager 
         isOpen={showManager} 
         onClose={() => setShowManager(false)} 
-        onExerciseAdded={(newEx) => {
-          setExercises([...exercises, newEx].sort((a,b) => a.title.localeCompare(b.title)));
+        exerciseToEdit={selectedExercise}
+        onExerciseSaved={(savedEx) => {
+          if (selectedExercise) {
+            setExercises(exercises.map(e => e.id === savedEx.id ? savedEx : e).sort((a,b) => a.title.localeCompare(b.title)));
+          } else {
+            setExercises([...exercises, savedEx].sort((a,b) => a.title.localeCompare(b.title)));
+          }
           setShowManager(false);
         }} 
       />

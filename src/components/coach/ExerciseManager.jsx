@@ -5,7 +5,7 @@ import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { X, Youtube, Loader2, Save } from 'lucide-react';
 
-export const ExerciseManager = ({ isOpen, onClose, onExerciseAdded }) => {
+export const ExerciseManager = ({ isOpen, onClose, onExerciseSaved, exerciseToEdit }) => {
   const [url, setUrl] = useState('');
   const [loadingYt, setLoadingYt] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -18,6 +18,16 @@ export const ExerciseManager = ({ isOpen, onClose, onExerciseAdded }) => {
     default_block: 'main',
     duration: ''
   });
+
+  useEffect(() => {
+    if (exerciseToEdit) {
+      setFormData(exerciseToEdit);
+      setUrl(`https://youtu.be/${exerciseToEdit.yt_video_id}`);
+    } else {
+      setFormData({ title: '', description: '', yt_video_id: '', muscle_group: 'Pecho', default_block: 'main', duration: '' });
+      setUrl('');
+    }
+  }, [exerciseToEdit, isOpen]);
 
   const MUSCLE_GROUPS = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Movilidad', 'Cardio', 'Full Body'];
   const BLOCKS = [
@@ -90,12 +100,18 @@ export const ExerciseManager = ({ isOpen, onClose, onExerciseAdded }) => {
     }
     setSaving(true);
     try {
-      const { data, error } = await supabase.from('exercises').insert([formData]).select().single();
-      if (error) throw error;
+      let savedData;
+      if (exerciseToEdit) {
+        const { data, error } = await supabase.from('exercises').update(formData).eq('id', exerciseToEdit.id).select().single();
+        if (error) throw error;
+        savedData = data;
+      } else {
+        const { data, error } = await supabase.from('exercises').insert([formData]).select().single();
+        if (error) throw error;
+        savedData = data;
+      }
       
-      if (onExerciseAdded) onExerciseAdded(data);
-      setUrl('');
-      setFormData({ title: '', description: '', yt_video_id: '', muscle_group: 'Pecho', default_block: 'main', duration: '' });
+      if (onExerciseSaved) onExerciseSaved(savedData);
       onClose();
     } catch (error) {
       alert('Error al guardar: ' + error.message);
@@ -115,7 +131,7 @@ export const ExerciseManager = ({ isOpen, onClose, onExerciseAdded }) => {
           <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '12px', display: 'flex', color: '#ef4444' }}>
              <Youtube size={22} />
           </div>
-          Añadir Ejercicio
+          {exerciseToEdit ? 'Editar Ejercicio' : 'Añadir Ejercicio'}
         </h2>
 
         <div style={{ display: 'grid', gap: '1.25rem' }}>
