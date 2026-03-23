@@ -11,13 +11,15 @@ export const ProfileSettings = ({ onSave, onCancel }) => {
   const [firstName, setFirstName] = useState(user.first_name || '');
   const [lastName, setLastName] = useState(user.last_name || '');
   const [phone, setPhone] = useState(user.phone || '');
+  const [email, setEmail] = useState(user.email || '');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           first_name: firstName,
@@ -25,9 +27,19 @@ export const ProfileSettings = ({ onSave, onCancel }) => {
           phone: phone
         })
         .eq('id', user.id);
+      if (profileError) throw profileError;
 
-      if (error) throw error;
-      alert('Perfil actualizado correctamente');
+      const updates = {};
+      if (email !== user.email) updates.email = email;
+      if (password) updates.password = password;
+
+      if (Object.keys(updates).length > 0) {
+        const { error: authError } = await supabase.auth.updateUser(updates);
+        if (authError) throw authError;
+      }
+
+      alert('Perfil y credenciales actualizados correctamente');
+      setPassword('');
       if (onSave) onSave();
     } catch (err) {
       alert(err.message);
@@ -72,12 +84,24 @@ export const ProfileSettings = ({ onSave, onCancel }) => {
           icon={<Phone size={16} />}
         />
 
-        <Input 
-          label="Email (No editable)" 
-          value={user.email} 
-          disabled
-          icon={<Mail size={16} />}
-        />
+        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)' }}>
+          <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--color-primary)' }}>Credenciales de Acceso</h3>
+          <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
+            <Input 
+              label="Correo Electrónico (Email)" 
+              value={email} 
+              onChange={e => setEmail(e.target.value)}
+              icon={<Mail size={16} />}
+            />
+            <Input 
+              type="password"
+              label="Nueva Contraseña (dejar en blanco para no cambiar)" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Escribe una nueva clave..."
+            />
+          </div>
+        </div>
 
         <div style={{ marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-md)' }}>
           <Button type="submit" disabled={loading} style={{ flex: 1 }}>

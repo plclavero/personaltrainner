@@ -16,7 +16,7 @@ export const TestUserCreator = () => {
 
   const createAll = async () => {
     setLoading(true);
-    const newResults = [];
+    const newResults = [...results];
     for (const u of testUsers) {
       try {
         const { error } = await supabase.auth.signUp({
@@ -41,6 +41,32 @@ export const TestUserCreator = () => {
     setLoading(false);
   };
 
+  const createProfe = async () => {
+    setLoading(true);
+    const newResults = [...results];
+    try {
+      const email = `profe_${Math.floor(Math.random()*1000)}@test.com`;
+      const { error } = await supabase.auth.signUp({
+        email,
+        password: 'claveprofe123',
+        options: {
+          data: {
+            role: 'coach',
+            first_name: 'Profesor',
+            last_name: 'Test',
+            phone: '999999'
+          }
+        }
+      });
+      if (error) throw error;
+      newResults.push({ email, status: '✅ Profe Creado' });
+    } catch (err) {
+      newResults.push({ email: 'Profesor', status: `❌ ${err.message}` });
+    }
+    setResults(newResults);
+    setLoading(false);
+  };
+
   return (
     <div style={{ padding: 'var(--space-xl)', maxWidth: '500px', margin: '0 auto' }}>
       <Card>
@@ -50,10 +76,17 @@ export const TestUserCreator = () => {
           <p style={{ color: 'var(--color-text-muted)' }}>Crea rápidamente los 3 alumnos solicitados.</p>
         </div>
 
-        <Button onClick={createAll} disabled={loading} style={{ width: '100%' }}>
-          <UserPlus size={18} />
-          {loading ? 'Procesando...' : 'Crear 3 Alumnos (clave123)'}
-        </Button>
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          <Button onClick={createAll} disabled={loading} style={{ width: '100%' }}>
+            <UserPlus size={18} />
+            {loading ? 'Procesando...' : 'Crear 3 Alumnos (clave123)'}
+          </Button>
+
+          <Button variant="secondary" onClick={createProfe} disabled={loading} style={{ width: '100%', background: 'rgba(79, 70, 229, 0.1)', color: 'var(--color-primary)' }}>
+            <ShieldAlert size={18} />
+            {loading ? 'Procesando...' : 'Crear 1 Profesor (claveprofe123)'}
+          </Button>
+        </div>
 
         {results.length > 0 && (
           <div style={{ marginTop: 'var(--space-xl)', borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-md)' }}>
